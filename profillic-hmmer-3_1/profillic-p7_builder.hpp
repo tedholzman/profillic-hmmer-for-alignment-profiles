@@ -470,9 +470,7 @@ profillic_p7_Builder(P7_BUILDER *bld, ESL_MSA *msa, ProfileType const * const pr
   /// The following creates hashcode from the msa (or the consensus sequence of the galosh profile):
   /// \todo [profillic]: Consider altering this to create a checksum from the full Profile HMM somehow.
   if ((status =  esl_msa_Checksum     (msa, &checksum))                 != eslOK) ESL_XFAIL(status, bld->errbuf, "Failed to calculate checksum"); 
-///TAH 3/12 debug
-msa->nseq = 10;
-  // NOTE: For now, we don't use this with profillic.  In the future, when we read in both an msa (viterbi alignments, perhaps .. or random alignment draws) and a profile, then we can use this for the msa.
+  /// \note For now, we don't use this with profillic.  In the future, when we read in both an msa (viterbi alignments, perhaps .. or random alignment draws) and a profile, then we can use this for the msa.
   if( msa->nseq > 1 ) {
     if ((status =  relative_weights     (bld, msa))                       != eslOK) goto ERROR;
   }
@@ -1240,8 +1238,8 @@ effective_seqnumber(P7_BUILDER *bld, const ESL_MSA *msa, P7_HMM *hmm, const P7_B
 
       /// \todo REMOVE/repair
       cout << "SETTING EFFN_ENTROPY" << endl;
-      cout << "hacking hmm->nseq = 10" << endl;
-      hmm->nseq = 10;
+      //cout << "hacking hmm->nseq = 10" << endl;
+      //hmm->nseq = 10;
 
       etarget = (bld->esigma - eslCONST_LOG2R * log( 2.0 / ((double) hmm->M * (double) (hmm->M+1)))) / (double) hmm->M; /* xref J5/36. */
       /// \todo REMOVE

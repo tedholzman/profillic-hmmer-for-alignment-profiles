@@ -40,8 +40,10 @@ extern "C" {
 #include "esl_msa.h"
 }
 #define eslMSAFILE_PROFILLIC       98103  /* A galosh profile (from profillic)   */
-#define PRId64 " ## d ## "
-
+//TAH 3/12 this doesn't do what the original programmer intended.  And it fails under linux.
+// ## only concatenates macro arguments
+//#define PRId64 " ## d ## "
+#define PRId64 "d"
 // Predecs
 int
 profillic_eslx_msafile_Read(ESLX_MSAFILE *afp, ESL_MSA **ret_msa);
@@ -458,7 +460,7 @@ profillic_esl_msafile_profile_Read(ESLX_MSAFILE *afp, ESL_MSA **ret_msa, Profile
   // NOTE: Right now this isn't actually using the open file pointer; for convenience I just use the profile.fromFile( <filename> ) method.
   // TODO: Use convenience fns in esl_buffer.h; see eg hmmer-3.1/easel/esl_msafile_stockholm.c for examples...
   ESL_MSA                 *msa      = NULL;
-  string profile_string;
+  //string profile_string;
   char *buf;
   long len;
   int                      seqidx;
@@ -607,7 +609,7 @@ profillic_esl_alignment_profile_Read(ESLX_MSAFILE *afp, ESL_MSA **ret_msa, Profi
   // NOTE: Right now this isn't actually using the open file pointer; for convenience I just use the profile.fromFile( <filename> ) method.
   // TODO: Use convenience fns in esl_buffer.h; see eg hmmer-3.1/easel/esl_msafile_stockholm.c for examples...
   ESL_MSA                 *msa      = NULL;
-  string profile_string;
+//  string profile_string;
   char *buf;
   long len;
   int                      seqidx;

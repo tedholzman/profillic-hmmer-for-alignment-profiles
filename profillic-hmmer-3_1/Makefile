@@ -6,7 +6,7 @@
 #CFLAGS		= -w
 #CFLAGS         = -Winline
 ## TAH 2/12 debug symbols
-CFLAGS		= -g3 -gdwarf-2 -w
+CFLAGS		= -g3 -gstabs -w
 #JFLAGS		=
 #LDFLAGS	= -pg
 
