@@ -1,11 +1,7 @@
-/**
- * \file profillic-p7_builder.hpp
- */
-
 #ifndef __GALOSH_PROFILLICP7BUILDER_HPP__
 #define __GALOSH_PROFILLICP7BUILDER_HPP__
 
-/* Standardized pipeline for construction of new HMMs.
+/** Standardized pipeline for construction of new HMMs.
  * 
  * Contents:
  *    1. P7_BUILDER: allocation, initialization, destruction
@@ -53,10 +49,10 @@ profillic_p7_Builder_MaxLength (P7_HMM *hmm, double emit_thresh);
  * 1. P7_BUILDER: allocation, initialization, destruction
  *****************************************************************/
 
-/* Function:  p7_builder_Create()
- * Synopsis:  Create a default HMM construction configuration.
+/** Function:  p7_builder_Create()
+ *  Synopsis:  Create a default HMM construction configuration.
  *
- * Purpose:   Create a construction configuration for building
+ *  Purpose:   Create a construction configuration for building
  *            HMMs in alphabet <abc>, and return a pointer to it.
  *            
  *            An application configuration <go> may optionally be
@@ -118,7 +114,7 @@ profillic_p7_builder_Create(const ESL_GETOPTS *go, const ESL_ALPHABET *abc)
       seed = esl_opt_GetInteger(go, "--seed");
     }
 
-  /* The default RE target is alphabet dependent. */
+  /** The default RE target is alphabet dependent. */
   if (go != NULL &&  esl_opt_IsOn (go, "--ere")) 
     bld->re_target = esl_opt_GetReal(go, "--ere");
   else {
@@ -143,22 +139,22 @@ profillic_p7_builder_Create(const ESL_GETOPTS *go, const ESL_ALPHABET *abc)
   bld->EfN        = (go != NULL) ?  esl_opt_GetInteger(go, "--EfN")        : 200;
   bld->Eft        = (go != NULL) ?  esl_opt_GetReal   (go, "--Eft")        : 0.04;
 
-  /* Normally we reinitialize the RNG to original seed before calibrating each model.
-   * This eliminates run-to-run variation.
-   * As a special case, seed==0 means choose an arbitrary seed and shut off the
-   * reinitialization; this allows run-to-run variation.
+  /** Normally we reinitialize the RNG to original seed before calibrating each model.
+   *  This eliminates run-to-run variation.
+   *  As a special case, seed==0 means choose an arbitrary seed and shut off the
+   *  reinitialization; this allows run-to-run variation.
    */
   bld->r            = esl_randomness_CreateFast(seed);
   bld->do_reseeding = (seed == 0) ? FALSE : TRUE;
 
   /// NOTE: this is now redundant with the new --pnone and --plaplace arguments.  Remove these, after verifying that they're the same.
   if(esl_opt_GetBoolean(go, "--noprior") || esl_opt_GetBoolean(go, "--laplace")) {
-    // NOTE: we need the prior to be initialized for the rest of the
-    // code to work.  A laplace prior (eg a dirichlet with all "1"s)
-    // should have no effect in most cases.  See below in
-    // profillic_parameterize(..) where we ask the caller to specify
-    // whether a prior should be used or not for that step
-    // (determined, presumably by --noprior).
+    /// NOTE: we need the prior to be initialized for the rest of the
+    /// code to work.  A laplace prior (eg a dirichlet with all "1"s)
+    /// should have no effect in most cases.  See below in
+    /// profillic_parameterize(..) where we ask the caller to specify
+    /// whether a prior should be used or not for that step
+    /// (determined, presumably by --noprior).
     bld->prior = p7_prior_CreateLaplace(abc);
   } else if      (go && esl_opt_GetBoolean(go, "--pnone") )     bld->prior = NULL;
   else if (go && esl_opt_GetBoolean(go, "--plaplace") )  bld->prior = p7_prior_CreateLaplace(abc);
@@ -183,7 +179,7 @@ profillic_p7_builder_Create(const ESL_GETOPTS *go, const ESL_ALPHABET *abc)
 }
 
 
-/* Function:  p7_builder_LoadScoreSystem()
+/** Function:  p7_builder_LoadScoreSystem()
  * Synopsis:  Load a standard score system for single sequence queries.
  *
  * Purpose:   Initialize the builder <bld> to be able to parameterize
@@ -230,33 +226,33 @@ profillic_p7_builder_LoadScoreSystem(P7_BUILDER *bld, const char *matrix, double
 
   bld->errbuf[0] = '\0';
 
-  /* If a score system is already set, delete it. */
+  /** If a score system is already set, delete it. */
   if (bld->S != NULL) esl_scorematrix_Destroy(bld->S);
   if (bld->Q != NULL) esl_dmatrix_Destroy(bld->Q);
 
-  /* Get the scoring matrix */
+  /** Get the scoring matrix */
   if ((bld->S  = esl_scorematrix_Create(bld->abc)) == NULL) { status = eslEMEM; goto ERROR; }
   status =  esl_scorematrix_Set(matrix, bld->S);
   if      (status == eslENOTFOUND) ESL_XFAIL(status, bld->errbuf, "no matrix named %s is available as a built-in", matrix);
   else if (status != eslOK)        ESL_XFAIL(status, bld->errbuf, "failed to set score matrix %s as a built-in",   matrix);
 
-  /* A wasteful conversion of the HMMER single-precision background probs to Easel double-prec */
+  /** A wasteful conversion of the HMMER single-precision background probs to Easel double-prec */
   ESL_ALLOC_CPP(double, f, sizeof(double) * bg->abc->K);
   esl_vec_F2D(bg->f, bg->abc->K, f);
 
-  /* Backcalculate joint probability matrix Q, given scores S and background freqs bg->f.  */
-  /* Failures shouldn't happen here: these are standard matrices.  */
+  /** Backcalculate joint probability matrix Q, given scores S and background freqs bg->f.  */
+  /** Failures shouldn't happen here: these are standard matrices.  */
   status = esl_scorematrix_ProbifyGivenBG(bld->S, f, f, &slambda, &(bld->Q));
   if      (status == eslEINVAL)  ESL_XFAIL(eslEINVAL, bld->errbuf, "built-in score matrix %s has no valid solution for lambda", matrix);
   else if (status == eslENOHALT) ESL_XFAIL(eslEINVAL, bld->errbuf, "failed to solve score matrix %s for lambda", matrix);
   else if (status != eslOK)      ESL_XFAIL(eslEINVAL, bld->errbuf, "unexpected error in solving score matrix %s for probability parameters", matrix);
 
-  /* Convert joint probabilities P(ab) to conditionals P(b|a) */
+  /** Convert joint probabilities P(ab) to conditionals P(b|a) */
   for (a = 0; a < bld->abc->K; a++)
     for (b = 0; b < bld->abc->K; b++)
       bld->Q->mx[a][b] /= f[a];	/* Q->mx[a][b] is now P(b | a) */
 
-  /* Normalize mx, so the values P(b|a) for row a sum to 1 */
+  /** Normalize mx, so the values P(b|a) for row a sum to 1 */
   for (a = 0; a < bld->abc->K; a++)
     esl_vec_DNorm(bld->Q->mx[a],  bld->abc->K);
 
@@ -272,7 +268,7 @@ profillic_p7_builder_LoadScoreSystem(P7_BUILDER *bld, const char *matrix, double
 }
 
 
-/* Function:  p7_builder_SetScoreSystem()
+/** Function:  p7_builder_SetScoreSystem()
  * Synopsis:  Initialize score system for single sequence queries.
  *
  * Purpose:   Initialize the builder <bld> to be able to parameterize
@@ -326,11 +322,11 @@ profillic_p7_builder_SetScoreSystem(P7_BUILDER *bld, const char *mxfile, const c
 
   bld->errbuf[0] = '\0';
 
-  /* If a score system is already set, delete it. */
+  /** If a score system is already set, delete it. */
   if (bld->S != NULL) esl_scorematrix_Destroy(bld->S);
   if (bld->Q != NULL) esl_dmatrix_Destroy(bld->Q);
 
-  /* Get the scoring matrix */
+  /** Get the scoring matrix */
   if ((bld->S  = esl_scorematrix_Create(bld->abc)) == NULL) { status = eslEMEM; goto ERROR; }
   if (mxfile == NULL) 
     {
@@ -344,22 +340,22 @@ profillic_p7_builder_SetScoreSystem(P7_BUILDER *bld, const char *mxfile, const c
       efp = NULL;
     }
 
-  /* A wasteful conversion of the HMMER single-precision background probs to Easel double-prec */
+  /** A wasteful conversion of the HMMER single-precision background probs to Easel double-prec */
   ESL_ALLOC_CPP(double, f, sizeof(double) * bg->abc->K);
   esl_vec_F2D(bg->f, bg->abc->K, f);
 
-  /* Backcalculate joint probability matrix Q, given scores S and background freqs bg->f.  */
+  /** Backcalculate joint probability matrix Q, given scores S and background freqs bg->f.  */
   status = esl_scorematrix_ProbifyGivenBG(bld->S, f, f, &slambda, &(bld->Q));
   if      (status == eslEINVAL)  ESL_XFAIL(eslEINVAL, bld->errbuf, "input score matrix %s has no valid solution for lambda", mxfile);
   else if (status == eslENOHALT) ESL_XFAIL(eslEINVAL, bld->errbuf, "failed to solve input score matrix %s for lambda: are you sure it's valid?", mxfile);
   else if (status != eslOK)      ESL_XFAIL(eslEINVAL, bld->errbuf, "unexpected error in solving input score matrix %s for probability parameters", mxfile);
 
-  /* Convert joint probs P(ab) to conditionals P(b | a) */
+  /** Convert joint probs P(ab) to conditionals P(b | a) */
   for (a = 0; a < bld->abc->K; a++)
     for (b = 0; b < bld->abc->K; b++)
       bld->Q->mx[a][b] /= f[a];	/* Q->mx[a][b] is now P(b | a) */
 
-  /* Normalize mx, so the values P(b|a) for row a sum to 1 */
+  /** Normalize mx, so the values P(b|a) for row a sum to 1 */
   for (a = 0; a < bld->abc->K; a++)
     esl_vec_DNorm(bld->Q->mx[a],  bld->abc->K);
 
@@ -375,10 +371,7 @@ profillic_p7_builder_SetScoreSystem(P7_BUILDER *bld, const char *mxfile, const c
   return status;
 }
 
-
-
-
-/* Function:  p7_builder_Destroy()
+/** Function:  p7_builder_Destroy()
  * Synopsis:  Free a <P7_BUILDER>
  *
  * Purpose:   Frees a <P7_BUILDER> object.
@@ -467,10 +460,11 @@ profillic_p7_Builder(P7_BUILDER *bld, ESL_MSA *msa, ProfileType const * const pr
   // NOTE: This checks the alignment for "missing data chars" ('~'), which is not relevant to a profillic profile consensus, but should be fine to call.
   if ((status =  validate_msa         (bld, msa))                       != eslOK) goto ERROR;
 
-  /// The following creates hashcode from the msa (or the consensus sequence of the galosh profile):
-  /// \todo [profillic]: Consider altering this to create a checksum from the full Profile HMM somehow.
+  // The following creates hashcode from the msa (or the consensus sequence of the galosh profile):
+  // TODO [profillic]: Consider altering this to create a checksum from the full Profile HMM somehow.
   if ((status =  esl_msa_Checksum     (msa, &checksum))                 != eslOK) ESL_XFAIL(status, bld->errbuf, "Failed to calculate checksum"); 
-  /// \note For now, we don't use this with profillic.  In the future, when we read in both an msa (viterbi alignments, perhaps .. or random alignment draws) and a profile, then we can use this for the msa.
+
+  // NOTE: For now, we don't use this with profillic.  In the future, when we read in both an msa (viterbi alignments, perhaps .. or random alignment draws) and a profile, then we can use this for the msa.
   if( msa->nseq > 1 ) {
     if ((status =  relative_weights     (bld, msa))                       != eslOK) goto ERROR;
   }
@@ -827,7 +821,7 @@ validate_msa(P7_BUILDER *bld, ESL_MSA *msa)
 }
 
 
-/* set_relative_weights():
+/** set_relative_weights():
  * Set msa->wgt vector, using user's choice of relative weighting algorithm.
  */
 static int
@@ -836,7 +830,7 @@ relative_weights(P7_BUILDER *bld, ESL_MSA *msa)
   int status = eslOK;
 
   if      (bld->wgt_strategy == p7_WGT_NONE)                    { esl_vec_DSet(msa->wgt, msa->nseq, 1.); }
-  else if (bld->wgt_strategy == p7_WGT_GIVEN)                   ;
+  else if (bld->wgt_strategy == p7_WGT_GIVEN)                   {}
   else if (bld->wgt_strategy == p7_WGT_PB)                      status = esl_msaweight_PB(msa); 
   else if (bld->wgt_strategy == p7_WGT_GSC)                     status = esl_msaweight_GSC(msa); 
   else if (bld->wgt_strategy == p7_WGT_BLOSUM)                  status = esl_msaweight_BLOSUM(msa, bld->wid); 
@@ -847,19 +841,17 @@ relative_weights(P7_BUILDER *bld, ESL_MSA *msa)
 }
 
 
-/* build_model():
+/** build_model():
  * Given <msa>, choose HMM architecture, collect counts;
  * upon return, <*ret_hmm> is newly allocated and contains
  * relative-weighted observed counts.
  */
-
 template <typename ProfileType>
 static int
 profillic_p7_Profillicmodelmaker(P7_BUILDER *bld, ESL_MSA * msa, ProfileType const & profile, P7_HMM **ret_hmm)
 {
-// TAH 2/12 for conversion to AlignmentProfile
-//  typedef typename galosh::profile_traits<ProfileType>::ResidueType ResidueType;
-  typedef typename ProfileType::APAResidueType ResidueType;
+  typedef typename galosh::profile_traits<ProfileType>::ResidueType ResidueType;
+
   int        status;		/* return status                       */
   P7_HMM    *hmm = NULL;        /* RETURN: new hmm                     */
   int      M;                   /* length of new model in match states */
@@ -896,24 +888,16 @@ profillic_p7_Profillicmodelmaker(P7_BUILDER *bld, ESL_MSA * msa, ProfileType con
   // fromPreAlign
   hmm->t[ 0 ][ p7H_MI ] =
      toDouble(
-/// TAH 3/12 mod for using alignment profiles.
-///  Note:  for 0th element, Insertion distribution is equivalent to
-///         PreAlign distribution
-///    profile[ galosh::Transition::fromPreAlign ][ galosh::TransitionFromPreAlign::toPreAlign ]
-    	   profile[ 0 ][galosh::profile_Insertion_distribution_tag()][ galosh::TransitionFromInsertion::toInsertion ]
+      profile[ galosh::Transition::fromPreAlign ][ galosh::TransitionFromPreAlign::toPreAlign ]
     );
   hmm->t[ 0 ][ p7H_II ] =  hmm->t[ 0 ][ p7H_MI ];
   hmm->t[ 0 ][ p7H_IM ] = ( 1 - hmm->t[ 0 ][ p7H_MI ] );
   for( res_i = 0; res_i < seqan::ValueSize<ResidueType>::VALUE; res_i++ ) {
     hmmer_digitized_residue =
       esl_abc_DigitizeSymbol( msa->abc, static_cast<char>( ResidueType( res_i ) ) );
-    /// TAH 3/12 conversion to alignment profiles.  Assuming 0th residue
-    /// insertion emission is equivalent to PreAlignInsertion
     hmm->ins[ 0 ][ hmmer_digitized_residue ] =
        toDouble(
-    	      /// TAH 3/12 mod for using alignment profiles
-    	      ///profile[ galosh::Emission::PreAlignInsertion ][ res_i ]
-    	      profile[ 0 ][galosh::profile_Insertion_emission_distribution_tag()][ res_i ]
+        profile[ galosh::Emission::PreAlignInsertion ][ res_i ]
        );
   }
 
@@ -921,17 +905,12 @@ profillic_p7_Profillicmodelmaker(P7_BUILDER *bld, ESL_MSA * msa, ProfileType con
   hmm->t[ 0 ][ p7H_MM ] =
     toDouble(
       ( 1 - hmm->t[ 0 ][ p7H_MI ] ) *
-      /// TAH 3/12 mod for using alignment profiles
-      /// Assuming this is indexed by profile_Begin_distribution
-      ///profile[ galosh::Transition::fromBegin ][ galosh::TransitionFromBegin::toMatch ]
-      profile[ 0 ][galosh::profile_Begin_distribution_tag()][ galosh::TransitionFromBegin::toMatch ]
+      profile[ galosh::Transition::fromBegin ][ galosh::TransitionFromBegin::toMatch ]
     );
   hmm->t[ 0 ][ p7H_MD ] =
     toDouble(
       ( 1 - hmm->t[ 0 ][ p7H_MI ] ) *
-      /// TAH 3/12 mod for using alignment profiles
-      /// profile[ galosh::Transition::fromBegin ][ galosh::TransitionFromBegin::toDeletion ]
-      profile[ 0 ][galosh::profile_Begin_distribution_tag()][ galosh::TransitionFromBegin::toDeletion ]
+      profile[ galosh::Transition::fromBegin ][ galosh::TransitionFromBegin::toDeletion ]
     );
 
   // ALWAYS TRUE, so need not be set:
@@ -946,50 +925,25 @@ profillic_p7_Profillicmodelmaker(P7_BUILDER *bld, ESL_MSA * msa, ProfileType con
 //      cout << '.';
 //      cout.flush();
 //    }
-    /// \todo If this is too slow, memorize the ResidueType( res_i )s.
+    // TODO: If this is too slow, memoize the ResidueType( res_i )s.
     for( res_i = 0; res_i < seqan::ValueSize<ResidueType>::VALUE; res_i++ ) {
       hmmer_digitized_residue =
         esl_abc_DigitizeSymbol( msa->abc, static_cast<char>( ResidueType( res_i ) ) );
-
-      ///TAH 3/12 this compiled.  Is it correct?  Should it be profile[ pos_i + 1]?
       hmm->mat[ pos_i + 1 ][ hmmer_digitized_residue ] =
         toDouble(
-            profile[ pos_i ][galosh::profile_Match_emission_distribution_tag()][res_i]
-//          profile[ pos_i ][ galosh::Emission::Match ][ res_i ]
+          profile[ pos_i ][ galosh::Emission::Match ][ res_i ]
         );
-      /// TAH 3/12 check indexing
       if( pos_i == ( profile.length() - 1 ) ) {
         // Use post-align insertions
         hmm->ins[ pos_i + 1 ][ hmmer_digitized_residue ] =
           toDouble(
-              ///TAH 3/12 for alignment profile mods.
-        		  ///check middle index.  Last index, Insert is substituted for post
-        		  ///profile[ galosh::Emission::PostAlignInsertion ][ res_i ]
-        		  profile[ pos_i][galosh::profile_Insertion_emission_distribution_tag()][ res_i ]
+            profile[ galosh::Emission::PostAlignInsertion ][ res_i ]
           );
-/**
- * TAH 3/12 comment out assertion
- * \todo Think about a good solution to the pre-align emission distributions
- *
- * \note Paul's note:
- * That's asserting that insertions at the pre-align state have the same emission
- * distribution as assertions at every internal state.  In the case of alignment
- * profiles, the per-position insertion distributions should be used instead.
- * Unfortunately this can't be a final solution because we really should account
- * for the amount of information we have (ie some positions have no insertions
- * -- ever -- so the insertion distribution is poorly informed, while others have
- * a lot of insertions).. I'll give that some thought.
- *
- */
-
-//        assert( hmm->ins[ pos_i + 1 ][ hmmer_digitized_residue ] == hmm->ins[ 0 ][ hmmer_digitized_residue ] );
+        assert( hmm->ins[ pos_i + 1 ][ hmmer_digitized_residue ] == hmm->ins[ 0 ][ hmmer_digitized_residue ] );
       } else { // if this is the last position (use post-align insertions) .. else ..
         hmm->ins[ pos_i + 1 ][ hmmer_digitized_residue ] =
           toDouble(
-            ///TAH 3/12 for alignment profile mods.
-            ///check middle index
-        	    ///profile[ galosh::Emission::Insertion ][ res_i ]
-        	    profile[ pos_i ][galosh::profile_Insertion_emission_distribution_tag()][ res_i ]
+            profile[ galosh::Emission::Insertion ][ res_i ]
           );
       } // End if this is the last position (use post-align insertions) .. else ..
     } // End foreach res_i
@@ -997,28 +951,20 @@ profillic_p7_Profillicmodelmaker(P7_BUILDER *bld, ESL_MSA * msa, ProfileType con
       // Use post-align insertions
       hmm->t[ pos_i + 1 ][ p7H_IM ] =
          toDouble(
-        	     /// TAH 3/12 mod for using alignment profiles
-        		 ///profile[ galosh::Transition::fromPostAlign ][ galosh::TransitionFromPostAlign::toTerminal ]
-        		 profile[ pos_i ][galosh::profile_PostAlign_distribution_tag()][ galosh::TransitionFromPostAlign::toTerminal ]
+           profile[ galosh::Transition::fromPostAlign ][ galosh::TransitionFromPostAlign::toTerminal ]
          );
       hmm->t[ pos_i + 1 ][ p7H_II ] =
          toDouble(
-        	    /// TAH 3/12 mod for using alignment profiles
-        		/// profile[ galosh::Transition::fromPostAlign ][ galosh::TransitionFromPostAlign::toPostAlign ]
-        		 profile[ pos_i ][galosh::profile_PostAlign_distribution_tag()][ galosh::TransitionFromPostAlign::toPostAlign ]
+           profile[ galosh::Transition::fromPostAlign ][ galosh::TransitionFromPostAlign::toPostAlign ]
          );
 
       hmm->t[ pos_i + 1 ][ p7H_MM ] = //hmm->t[ pos_i + 1 ][ p7H_IM ];
         toDouble(
-       	  /// TAH 3/12 mod for using alignment profiles
-          /// profile[ galosh::Transition::fromPostAlign ][ galosh::TransitionFromPostAlign::toTerminal ]
-          profile[ pos_i ][galosh::profile_PostAlign_distribution_tag()][ galosh::TransitionFromPostAlign::toTerminal ]
+          profile[ galosh::Transition::fromPostAlign ][ galosh::TransitionFromPostAlign::toTerminal ]
         );
       hmm->t[ pos_i + 1 ][ p7H_MI ] = //1.0 - hmm->t[ pos_i + 1 ][ p7H_MM ];
         toDouble(
-       	     /// TAH 3/12 mod for using alignment profiles
-             ///   profile[ galosh::Transition::fromPostAlign ][ galosh::TransitionFromPostAlign::toPostAlign ]
-           profile[ pos_i ][galosh::profile_PostAlign_distribution_tag()][ galosh::TransitionFromPostAlign::toPostAlign ]
+          profile[ galosh::Transition::fromPostAlign ][ galosh::TransitionFromPostAlign::toPostAlign ]
         );
 
       // ALWAYS TRUE, so need not be set:
@@ -1029,52 +975,37 @@ profillic_p7_Profillicmodelmaker(P7_BUILDER *bld, ESL_MSA * msa, ProfileType con
     } else {  // if this is the last position (use post-align insertions) .. else ..
       hmm->t[ pos_i + 1 ][ p7H_MM ] =
         toDouble(
-        	  /// TAH 3/12 mod for using alignment profiles
-          ///
-        	  ///profile[ galosh::Transition::fromMatch ][ galosh::TransitionFromMatch::toMatch ]
-        	  profile[ pos_i ][galosh::profile_Match_distribution_tag()][ galosh::TransitionFromMatch::toMatch ]
+          profile[ galosh::Transition::fromMatch ][ galosh::TransitionFromMatch::toMatch ]
         );
       hmm->t[ pos_i + 1 ][ p7H_MI ] =
         toDouble(
-          /// TAH 3/12 mod for using alignment profiles.
-          ///profile[ galosh::Transition::fromMatch ][ galosh::TransitionFromMatch::toInsertion ]
-        	  profile[ pos_i ][galosh::profile_Match_distribution_tag()][ galosh::TransitionFromMatch::toInsertion ]
+          profile[ galosh::Transition::fromMatch ][ galosh::TransitionFromMatch::toInsertion ]
         );
       hmm->t[ pos_i + 1 ][ p7H_MD ] =
         toDouble(
-          /// TAH 3/12 mod for using alignment profiles.
-          ///profile[ galosh::Transition::fromMatch ][ galosh::TransitionFromMatch::toDeletion ]
-        	  profile[ pos_i ][galosh::profile_Match_distribution_tag()][ galosh::TransitionFromMatch::toDeletion ]
+          profile[ galosh::Transition::fromMatch ][ galosh::TransitionFromMatch::toDeletion ]
         );
   
       hmm->t[ pos_i + 1 ][ p7H_IM ] =
         toDouble(
-          /// TAH 3/12 mod for using alignment profiles.
-          ///profile[ galosh::Transition::fromInsertion ][ galosh::TransitionFromInsertion::toMatch ]
-        	  profile[ pos_i ][galosh::profile_Insertion_distribution_tag()][ galosh::TransitionFromInsertion::toMatch ]
+          profile[ galosh::Transition::fromInsertion ][ galosh::TransitionFromInsertion::toMatch ]  
         );
       hmm->t[ pos_i + 1 ][ p7H_II ] =
         toDouble(
-          /// TAH 3/12 mod for using alignment profiles.  See note above.
-          ///profile[ galosh::Transition::fromInsertion ][ galosh::TransitionFromInsertion::toInsertion ]
-        	  profile[ pos_i ][galosh::profile_Insertion_distribution_tag()][ galosh::TransitionFromInsertion::toInsertion ]
+          profile[ galosh::Transition::fromInsertion ][ galosh::TransitionFromInsertion::toInsertion ]
         );
       hmm->t[ pos_i + 1 ][ p7H_DM ] =
         toDouble(
-          /// TAH 3/12 mod for using alignment profiles.  See note above.
-          ///profile[ galosh::Transition::fromDeletion ][ galosh::TransitionFromDeletion::toMatch ]
-        	  profile[ pos_i ][galosh::profile_Deletion_distribution_tag()][ galosh::TransitionFromDeletion::toMatch ]
+          profile[ galosh::Transition::fromDeletion ][ galosh::TransitionFromDeletion::toMatch ]
         );
       hmm->t[ pos_i + 1 ][ p7H_DD ] =
         toDouble(
-          /// TAH 3/12 mod for using alignment profiles.  See note above.
-          ///profile[ galosh::Transition::fromDeletion ][ galosh::TransitionFromDeletion::toDeletion ]
-        	  profile[ pos_i ][galosh::profile_Deletion_distribution_tag()][ galosh::TransitionFromDeletion::toDeletion ]
+          profile[ galosh::Transition::fromDeletion ][ galosh::TransitionFromDeletion::toDeletion ]
         );
     } // End if this is the last position (use post-align insertions) .. else ..
   } // End foreach pos_i
 
-  /// \todo Make nseq / eff_nseq somehow inputs!
+  // TODO: Make nseq / eff_nseq somehow inputs!
   hmm->nseq     = msa->nseq;
   hmm->eff_nseq = msa->nseq;
 
@@ -1236,20 +1167,20 @@ effective_seqnumber(P7_BUILDER *bld, const ESL_MSA *msa, P7_HMM *hmm, const P7_B
       double etarget; 
       double eff_nseq;
 
-      /// \todo REMOVE/repair
+      // TODO: REMOVE
       cout << "SETTING EFFN_ENTROPY" << endl;
-      //cout << "hacking hmm->nseq = 10" << endl;
-      //hmm->nseq = 10;
+      //cout << "hacking hmm->nseq = 1000" << endl;
+      //hmm->nseq = 1000;
 
       etarget = (bld->esigma - eslCONST_LOG2R * log( 2.0 / ((double) hmm->M * (double) (hmm->M+1)))) / (double) hmm->M; /* xref J5/36. */
-      /// \todo REMOVE
+      // TODO: REMOVE
       cout << "nominal etarget is " << etarget << "; bld->re_target is " << bld->re_target << endl;
       etarget = ESL_MAX(bld->re_target, etarget);
 
       status = p7_EntropyWeight(hmm, bg, bld->prior, etarget, &eff_nseq);
       if      (status == eslEMEM) ESL_XFAIL(status, bld->errbuf, "memory allocation failed");
       else if (status != eslOK)   ESL_XFAIL(status, bld->errbuf, "internal failure in entropy weighting algorithm");
-      /// \todo REMOVE
+      // TODO: REMOVE
       cout << "calculated eff_nseq is " << eff_nseq << endl;
       hmm->eff_nseq = eff_nseq;
     }

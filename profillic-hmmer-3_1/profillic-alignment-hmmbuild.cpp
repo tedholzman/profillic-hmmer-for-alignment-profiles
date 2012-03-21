@@ -44,9 +44,9 @@ extern "C" {
 /////////////// For profillic-hmmer //////////////////////////////////
 #include "profillic-hmmer.hpp"
 #include "DynamicProgramming.hpp"
-#include "profillic-p7_builder.hpp"
+#include "profillic-alignment-p7_builder.hpp"
 //#include "profillic-esl_msa.hpp"
-#include "profillic-esl_msafile.hpp"
+#include "profillic-alignment-esl_msafile.hpp"
 
 /// Updated notices:
 #define PROFILLIC_HMMER_VERSION "1.0a"
@@ -55,13 +55,13 @@ extern "C" {
 #define PROFILLIC_HMMER_URL "http://galosh.org/"
 
 /// Modified from hmmer.c p7_banner(..):
-/* Version info - set once for whole package in configure.ac
+/** Version info - set once for whole package in configure.ac
  */
 /*****************************************************************
  * 1. Miscellaneous functions for H3
  *****************************************************************/
 
-/* Function:  p7_banner()
+/** Function:  p7_banner()
  * Synopsis:  print standard HMMER application output header
  * Incept:    SRE, Wed May 23 10:45:53 2007 [Janelia]
  *
@@ -224,7 +224,7 @@ static ESL_OPTIONS options[] = {
 };
 
 
-/* struct cfg_s : "Global" application configuration shared by all threads/processes
+/** struct cfg_s : "Global" application configuration shared by all threads/processes
  * 
  * This structure is passed to routines within main.c, as a means of semi-encapsulation
  * of shared data amongst different parallel processes (threads or MPI processes).
@@ -439,17 +439,17 @@ main(int argc, char **argv)
   ESL_STOPWATCH   *w  = esl_stopwatch_Create();
   struct cfg_s     cfg;
 
-  /* Set processor specific flags */
+  /** Set processor specific flags */
   impl_Init();
 
   cfg.alifile     = NULL;
   cfg.hmmfile     = NULL;
 
-  /* Parse the command line
+  /** Parse the command line
    */
   process_commandline(argc, argv, &go, &cfg.hmmfile, &cfg.alifile);    
 
-  /* Initialize what we can in the config structure (without knowing the alphabet yet).
+  /** Initialize what we can in the config structure (without knowing the alphabet yet).
    * Fields controlled by masters are set up in usual_master() or mpi_master()
    * Fields used by workers are set up in mpi_worker()
    */
@@ -479,13 +479,13 @@ main(int argc, char **argv)
     if (cfg.fmt == eslMSAFILE_UNKNOWN) p7_Fail("%s is not a recognized input sequence file format\n", esl_opt_GetString(go, "--informat"));
   }
 
-  /* This is our stall point, if we need to wait until we get a
+  /** This is our stall point, if we need to wait until we get a
    * debugger attached to this process for debugging (especially
    * useful for MPI):
    */
   while (cfg.do_stall); 
 
-  /* Start timing. */
+  /** Start timing. */
   esl_stopwatch_Start(w);
 
   /* Figure out who we are, and send control there: 
@@ -536,7 +536,7 @@ main(int argc, char **argv)
 }
 
 
-/* usual_master()
+/** usual_master()
  * The usual version of hmmbuild, serial or threaded
  * For each MSA, build an HMM and save it.
  * 
@@ -557,7 +557,7 @@ profillic_usual_master(const ESL_GETOPTS *go, struct cfg_s *cfg)
   int              i;
   int              status;
 
-  /* Open files, set alphabet.
+  /** Open files, set alphabet.
    *   cfg->afp       - open alignment file for input
    *   cfg->abc       - alphabet expected or guessed in ali file
    *   cfg->hmmfp     - open HMM file for output
@@ -618,7 +618,7 @@ profillic_usual_master(const ESL_GETOPTS *go, struct cfg_s *cfg)
       info[i].bg = p7_bg_Create(cfg->abc);
       info[i].bld = p7_builder_Create(go, cfg->abc);
 
-      /* Default matrix is stored in the --mx option, so it's always IsOn().
+      /** Default matrix is stored in the --mx option, so it's always IsOn().
        * Check --mxfile first; then go to the --mx option and the default.
        */
       if ( cfg->abc->type == eslAMINO && esl_opt_IsUsed(go, "--single")) {
@@ -723,7 +723,7 @@ profillic_usual_master(const ESL_GETOPTS *go, struct cfg_s *cfg)
 }
 
 #ifdef HAVE_MPI
-/* mpi_master()
+/** mpi_master()
  * The MPI version of hmmbuild.
  * Follows standard pattern for a master/worker load-balanced MPI program (J1/78-79).
  * 
@@ -829,7 +829,7 @@ mpi_master(const ESL_GETOPTS *go, struct cfg_s *cfg)
   ESL_DPRINTF1(("%d workers are initialized\n", cfg->nproc-1));
 
 
-  /* Main loop: combining load workers, send/receive, clear workers loops;
+  /** Main loop: combining load workers, send/receive, clear workers loops;
    * also, catch error states and die later, after clean shutdown of workers.
    * 
    * When a recoverable error occurs, have_work = FALSE, xstatus !=
@@ -865,7 +865,7 @@ mpi_master(const ESL_GETOPTS *go, struct cfg_s *cfg)
 	  if (MPI_Recv(buf, bn, MPI_PACKED, wi, 0, MPI_COMM_WORLD, &mpistatus) != 0) { MPI_Finalize(); p7_Fail("mpi recv failed"); }
 	  ESL_DPRINTF1(("MPI master has received the buffer\n"));
 
-	  /* If we're in a recoverable error state, we're only clearing worker results;
+	  /** If we're in a recoverable error state, we're only clearing worker results;
            * just receive them, don't unpack them or print them.
            * But if our xstatus is OK, go ahead and process the result buffer.
 	   */
@@ -1373,7 +1373,7 @@ output_result(const struct cfg_s *cfg, char *errbuf, int msaidx, ESL_MSA *msa, P
 
 
 
-/* set_msa_name() 
+/** set_msa_name() 
  * Make sure the alignment has a name; this name will
  * then be transferred to the model.
  * 

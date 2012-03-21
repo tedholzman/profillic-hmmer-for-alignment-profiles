@@ -60,7 +60,7 @@ extern "C" {
  * 1. Miscellaneous functions for H3
  *****************************************************************/
 
-/* Function:  p7_banner()
+/** Function:  p7_banner()
  * Synopsis:  print standard HMMER application output header
  * Incept:    SRE, Wed May 23 10:45:53 2007 [Janelia]
  *
@@ -223,7 +223,7 @@ static ESL_OPTIONS options[] = {
 };
 
 
-/* struct cfg_s : "Global" application configuration shared by all threads/processes
+/** struct cfg_s : "Global" application configuration shared by all threads/processes
  * 
  * This structure is passed to routines within main.c, as a means of semi-encapsulation
  * of shared data amongst different parallel processes (threads or MPI processes).
@@ -448,7 +448,7 @@ main(int argc, char **argv)
    */
   process_commandline(argc, argv, &go, &cfg.hmmfile, &cfg.alifile);    
 
-  /* Initialize what we can in the config structure (without knowing the alphabet yet).
+  /** Initialize what we can in the config structure (without knowing the alphabet yet).
    * Fields controlled by masters are set up in usual_master() or mpi_master()
    * Fields used by workers are set up in mpi_worker()
    */
@@ -535,7 +535,7 @@ main(int argc, char **argv)
 }
 
 
-/* usual_master()
+/** usual_master()
  * The usual version of hmmbuild, serial or threaded
  * For each MSA, build an HMM and save it.
  * 
@@ -556,7 +556,7 @@ profillic_usual_master(const ESL_GETOPTS *go, struct cfg_s *cfg)
   int              i;
   int              status;
 
-  /* Open files, set alphabet.
+  /** Open files, set alphabet.
    *   cfg->afp       - open alignment file for input
    *   cfg->abc       - alphabet expected or guessed in ali file
    *   cfg->hmmfp     - open HMM file for output
@@ -714,7 +714,7 @@ profillic_usual_master(const ESL_GETOPTS *go, struct cfg_s *cfg)
 }
 
 #ifdef HAVE_MPI
-/* mpi_master()
+/** mpi_master()
  * The MPI version of hmmbuild.
  * Follows standard pattern for a master/worker load-balanced MPI program (J1/78-79).
  * 
@@ -820,7 +820,7 @@ mpi_master(const ESL_GETOPTS *go, struct cfg_s *cfg)
   ESL_DPRINTF1(("%d workers are initialized\n", cfg->nproc-1));
 
 
-  /* Main loop: combining load workers, send/receive, clear workers loops;
+  /** Main loop: combining load workers, send/receive, clear workers loops;
    * also, catch error states and die later, after clean shutdown of workers.
    * 
    * When a recoverable error occurs, have_work = FALSE, xstatus !=
@@ -856,7 +856,7 @@ mpi_master(const ESL_GETOPTS *go, struct cfg_s *cfg)
 	  if (MPI_Recv(buf, bn, MPI_PACKED, wi, 0, MPI_COMM_WORLD, &mpistatus) != 0) { MPI_Finalize(); p7_Fail("mpi recv failed"); }
 	  ESL_DPRINTF1(("MPI master has received the buffer\n"));
 
-	  /* If we're in a recoverable error state, we're only clearing worker results;
+	  /** If we're in a recoverable error state, we're only clearing worker results;
            * just receive them, don't unpack them or print them.
            * But if our xstatus is OK, go ahead and process the result buffer.
 	   */
@@ -904,7 +904,7 @@ mpi_master(const ESL_GETOPTS *go, struct cfg_s *cfg)
 	}
     }
   
-  /* On success or recoverable errors:
+  /** On success or recoverable errors:
    * Shut down workers cleanly. 
    */
   ESL_DPRINTF1(("MPI master is done. Shutting down all the workers cleanly\n"));
@@ -1318,9 +1318,6 @@ pipeline_thread(void *arg)
 }
 #endif   /* HMMER_THREADS */
  
-
-
-
 static int
 output_result(const struct cfg_s *cfg, char *errbuf, int msaidx, ESL_MSA *msa, P7_HMM *hmm, ESL_MSA *postmsa, double entropy)
 {
@@ -1363,7 +1360,7 @@ output_result(const struct cfg_s *cfg, char *errbuf, int msaidx, ESL_MSA *msa, P
 
 
 
-/* set_msa_name() 
+/** set_msa_name() 
  * Make sure the alignment has a name; this name will
  * then be transferred to the model.
  * 

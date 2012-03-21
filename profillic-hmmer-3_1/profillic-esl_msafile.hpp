@@ -1,7 +1,7 @@
 #ifndef __GALOSH_PROFILLICESLMSAFILE_HPP__
 #define __GALOSH_PROFILLICESLMSAFILE_HPP__
 
-/* Multiple sequence alignment file i/o 
+/** Multiple sequence alignment file i/o
  * 
  * Table of contents:
  *    1. Opening/closing an ESLX_MSAFILE.
@@ -40,10 +40,8 @@ extern "C" {
 #include "esl_msa.h"
 }
 #define eslMSAFILE_PROFILLIC       98103  /* A galosh profile (from profillic)   */
-//TAH 3/12 this doesn't do what the original programmer intended.  And it fails under linux.
-// ## only concatenates macro arguments
-//#define PRId64 " ## d ## "
 #define PRId64 "d"
+
 // Predecs
 int
 profillic_eslx_msafile_Read(ESLX_MSAFILE *afp, ESL_MSA **ret_msa);
@@ -370,8 +368,7 @@ profillic_msafile_OpenBuffer(ESL_ALPHABET **byp_abc, ESL_BUFFER *bf, int format,
 int
 profillic_eslx_msafile_Read(ESLX_MSAFILE *afp, ESL_MSA **ret_msa)
 {
- //TAH 2/12 Conversion to alignment profile
-	return profillic_eslx_msafile_Read(afp, ret_msa, (galosh::AlignmentProfileAccessor<seqan::Dna, floatrealspace, floatrealspace, floatrealspace> *)NULL );
+  return profillic_eslx_msafile_Read(afp, ret_msa, (galosh::ProfileTreeRoot<seqan::Dna, floatrealspace> *)NULL );
 }
 
 template <typename ProfileType>
@@ -395,10 +392,7 @@ profillic_eslx_msafile_Read(ESLX_MSAFILE *afp, ESL_MSA **ret_msa, ProfileType * 
   case eslMSAFILE_PSIBLAST:     if ((status = esl_msafile_psiblast_Read (afp, &msa)) != eslOK) goto ERROR; break;
   case eslMSAFILE_SELEX:        if ((status = esl_msafile_selex_Read    (afp, &msa)) != eslOK) goto ERROR; break;
   case eslMSAFILE_STOCKHOLM:    if ((status = esl_msafile_stockholm_Read(afp, &msa)) != eslOK) goto ERROR; break;
-//  case eslMSAFILE_PROFILLIC:    if ((status = profillic_esl_msafile_profile_Read(afp, &msa, profile_ptr)) != eslOK) goto ERROR; break;
-// TAH 2/12 for conversion to Alignment Profile
-/// \todo This should really be an overload of profillic_esl_msafile_profile_Read
-  case eslMSAFILE_PROFILLIC:    if ((status = profillic_esl_alignment_profile_Read(afp, &msa, profile_ptr)) != eslOK) goto ERROR; break;
+  case eslMSAFILE_PROFILLIC:    if ((status = profillic_esl_msafile_profile_Read(afp, &msa, profile_ptr)) != eslOK) goto ERROR; break;
   default:                      ESL_EXCEPTION(eslEINCONCEIVABLE, "no such msa file format"); break;
   }
   
@@ -460,14 +454,14 @@ profillic_esl_msafile_profile_Read(ESLX_MSAFILE *afp, ESL_MSA **ret_msa, Profile
   // NOTE: Right now this isn't actually using the open file pointer; for convenience I just use the profile.fromFile( <filename> ) method.
   // TODO: Use convenience fns in esl_buffer.h; see eg hmmer-3.1/easel/esl_msafile_stockholm.c for examples...
   ESL_MSA                 *msa      = NULL;
-  //string profile_string;
+  string profile_string;
   char *buf;
   long len;
   int                      seqidx;
   int                      status;
   char       errmsg2[eslERRBUFSIZE];
 
-  ESL_DASSERT1(afp->format == eslMSAFILE_PROFILLIC);
+  ESL_DASSERT1((afp->format == eslMSAFILE_PROFILLIC));
 
   const char * const seqname = "Galosh Profile Consensus";
   const char * const msaname = "Galosh Profile";
@@ -491,7 +485,7 @@ profillic_esl_msafile_profile_Read(ESLX_MSAFILE *afp, ESL_MSA **ret_msa, Profile
 
   //profile_string = buf;
   //profile_ptr->fromString( profile_string );
-  profile_ptr->fromFile( afp->bf->filename,profile_ptr );
+  profile_ptr->fromFile( afp->bf->filename );
   //if (buf)      free(buf);
   // TODO: WHY WON'T THIS WORK?  See HACKs in profillic-hmmbuild.cpp to work around it.
   //fseek( afp->bf->fp, 0, SEEK_END ); // go to the end (to signal there's no more profiles in the file, the next time we come to this function)
@@ -550,155 +544,6 @@ profillic_esl_msafile_profile_Read(ESLX_MSAFILE *afp, ESL_MSA **ret_msa, Profile
    * verify_parse will fill in errmsg if it sees a problem.
    */
   //if (verify_parse(msa, afp->errmsg) != eslOK) { status = eslEFORMAT; goto ERROR; } 
-
-  if (( status = esl_msa_SetDefaultWeights(msa)) != eslOK) goto ERROR;
-
-  if (ret_msa != NULL) *ret_msa = msa; else esl_msa_Destroy(msa);
-  return eslOK;
-
- ERROR:
-  if (msa != NULL)      esl_msa_Destroy(msa);
-  if (ret_msa != NULL) *ret_msa = NULL;
-  return status;
-}
-
-/*****************************************************************
- * 12.5.1 galosh profile format (from prolific)
- *****************************************************************/
-
-/* Function:  profillic_esl_alignment_profile_Read()
- * Ted Holzman       tholzman@scharp.org Feb 22, 2012
- * Paul T Edlefsen   paul@galosh.org   February 19, 2012.
- *
- * Synopsis:  Read a profillic/galosh profile.
- *
- * Purpose: Parse the Profile HMM from an open galosh alignment profile format
- *            file (from profuse) <afp>, leaving the profile in
- *            <ret_profile>. Also create a new
- *            MSA, and return it by reference through
- *            <*ret_msa>. Caller is responsible for freeing
- *            this <ESL_MSA>.
- *
- * Args:      <afp>     - open <ESL_MSAFILE> to read from
- *            <ret_msa> - RETURN: newly parsed, created <ESL_MSA>
- *
- * Returns:   <eslOK> on success. <*ret_msa> contains the newly
- *            allocated MSA. <afp> is poised at start of next
- *            alignment record, or is at EOF. The profile is in
- *            <ret_profile>.
- *
- *            <eslEOF> if no (more) profile data are found in
- *            <afp>, and <afp> is returned at EOF.
- *
- *            <eslEFORMAT> on a parse error. <*ret_msa> is set to
- *            <NULL>, and <ret_profile> is unaffected.
- *            <afp> contains information sufficient for
- *            constructing useful diagnostic output:
- *            | <afp->errmsg>       | user-directed error message     |
- *            | <afp->bf->filename> | name of the file                |
- *
- * Throws:    <eslEMEM> on allocation error.
- *            <eslESYS> if a system call fails, such as fread().
- *            <*ret_msa> is returned <NULL>.
- *
- */
-template <typename ProfileType>
-static int
-profillic_esl_alignment_profile_Read(ESLX_MSAFILE *afp, ESL_MSA **ret_msa, ProfileType * profile_ptr )
-{
-  // NOTE: Right now this isn't actually using the open file pointer; for convenience I just use the profile.fromFile( <filename> ) method.
-  // TODO: Use convenience fns in esl_buffer.h; see eg hmmer-3.1/easel/esl_msafile_stockholm.c for examples...
-  ESL_MSA                 *msa      = NULL;
-//  string profile_string;
-  char *buf;
-  long len;
-  int                      seqidx;
-  int                      status;
-  char       errmsg2[eslERRBUFSIZE];
-
-  ESL_DASSERT1(afp->format == eslMSAFILE_PROFILLIC);
-
-  const char * const seqname = "Galosh Alignment Profile Consensus";
-  const char * const msaname = "Galosh Alignment Profile";
-  uint32_t profile_length;
-  galosh::Sequence<typename ProfileType::value_type::APPPResidueType> consensus_sequence;
-  stringstream tmp_consensus_output_stream;
-
-  uint32_t pos_i;
-
-  if (profile_ptr == NULL)  { ESL_EXCEPTION(eslEINCONCEIVABLE, "profile_ptr is NULL in profillic_esl_msafile_profile_Read(..)!"); }
-  //if (feof(afp->bf->fp))  { status = eslEOF; goto ERROR; }
-  afp->errmsg[0] = '\0';
-
-  // Read in the galosh profile (from profillic)
-  //fseek( afp->bf->fp, 0, SEEK_END ); // go to the end
-  //len = afp->bf->ftell( afp->bf->fp ); // get the position at the end (length)
-  //fseek( afp->bf->fp, 0, SEEK_SET ); // go to the beginning again.
-
-  //ESL_ALLOC_CPP( char, buf, sizeof( char ) * len ); //malloc buffer
-  //fread( buf, len, 1, afp->bf->fp ); //read into buffer
-
-  //profile_string = buf;
-  //profile_ptr->fromString( profile_string );
-  profile_ptr->fromFile(afp->bf->filename,*profile_ptr);
-  //if (buf)      free(buf);
-  // TODO: WHY WON'T THIS WORK?  See HACKs in profillic-hmmbuild.cpp to work around it.
-  //fseek( afp->bf->fp, 0, SEEK_END ); // go to the end (to signal there's no more profiles in the file, the next time we come to this function)
-
-  // Calculate the consensus sequence.
-  profile_length = profile_ptr->length();
-  consensus_sequence.reinitialize( profile_length );
-  for( pos_i = 0; pos_i < profile_length; pos_i++ ) {
-    consensus_sequence[ pos_i ] =
-      ( *profile_ptr )[ pos_i ][ galosh::Emission::Match ].maximumValueType();
-  }
-  tmp_consensus_output_stream << consensus_sequence;
-
-  /* Allocate a growable MSA, and auxiliary parse data coupled to the MSA allocation */
-#ifdef eslAUGMENT_ALPHABET
-  if (afp->abc   &&  (msa = esl_msa_CreateDigital(afp->abc, 16, -1)) == NULL) { status = eslEMEM; goto ERROR; }
-#endif
-  if (! afp->abc &&  (msa = esl_msa_Create(                 16, -1)) == NULL) { status = eslEMEM; goto ERROR; }
-
-
-  // Set first-and-only seq to the consensus.  This should set sqlen[0] to the profile's length and set ax to have length 1 and ax[0] to be the sequence itself.  Also msa->sqname[0] to the "name" of that consensus sequence.
-
-  /* if nec, make room for the new seq */
-  if (msa->nseq >= msa->sqalloc && (status = esl_msa_Expand(msa)) != eslOK) return status;
-  seqidx = msa->nseq; // 0
-  msa->nseq++; // = 1
-  status = esl_strdup(seqname, -1, &(msa->sqname[seqidx]));
-  // NOTE: Could add description of this "sequence" here, using esl_msa_SetSeqDescription(msa, seqidx, desc).
-#ifdef eslAUGMENT_ALPHABET
-  if (msa->flags & eslMSA_DIGITAL)
-    {
-      // NOTE (profillic): There was a bug in this; it had said .."esl_abc_dsqcat(msa->abc, " where it should have said .."esl_abc_dsqcat(msa->abc->inmap, "
-      if((status = esl_abc_dsqcat(msa->abc->inmap, &(msa->ax[seqidx]), &(msa->sqlen[seqidx]), tmp_consensus_output_stream.str().c_str(), profile_length)) != eslOK) {
-        /* invalid char(s), get informative error message */
-        if (esl_abc_ValidateSeq(msa->abc, tmp_consensus_output_stream.str().c_str(), profile_length, afp->errmsg) != eslOK)
-          ESL_XFAIL(eslEFORMAT, errmsg2, "%s (line %d): %s", msa->sqname[0], afp->linenumber, afp->errmsg);
-      }
-    }
-#endif
-  if (! (msa->flags & eslMSA_DIGITAL))
-    {
-      status = esl_strcat(&(msa->aseq[seqidx]), 0, tmp_consensus_output_stream.str().c_str(), profile_length);
-      msa->sqlen[seqidx] = profile_length;
-    }
-  msa->alen = profile_length;
-
-  /// .... OR read in a fasta file of sequences too.
-  // TODO: (Optional?) Set msa->name to the name of the profile (file?)
-  esl_strdup(msaname, -1, &(msa->name));
-  // TODO: make sure eslMSA_HASWGTS is FALSE .. OR set it to TRUE and set msa->wgt[idx] to 1.0.
-  // NOTE: Could have secondary structure (per sequence) too. msa->ss[0]. msa->sslen[0] should be the same as msa->sqlen[0].
-  // TODO: Investigate what msa->sa and msa->pp are for.
-
-  /* Give the newly parsed MSA a good
-   * going-over, and finalize the fields of the MSA data structure.
-   * verify_parse will fill in errmsg if it sees a problem.
-   */
-  //if (verify_parse(msa, afp->errmsg) != eslOK) { status = eslEFORMAT; goto ERROR; }
 
   if (( status = esl_msa_SetDefaultWeights(msa)) != eslOK) goto ERROR;
 
