@@ -1,36 +1,40 @@
-/*---------------------------------------------------------------------------##
-##  Library:
-##      galosh::prolific
-##  File:
-##      Profile.hpp
-##  Author:
-##      D'Oleris Paul Thatcher Edlefsen   paul@galosh.org
-##  Description:
-##      Class definition for the Galosh Profile HMM class.  A Profile is a data
-##      structure for the model parameters.  Conceptually, for every position
-##      of the profile there are a bunch of parameters for each kind of Plan 7
-##      profile transition/emission.  We make this a vector of maps from
-##      ProfileKeys (eg. Transition) to maps from ProfileKey-specific params
-##      (eg. Transition_M_to_D) to the values of those params.
-##
-##      Also defines dirichlet priors for each set of profile parameters.
-##
-##      More about Plan7 can be found at
-##      http://www.csb.yale.edu/userguides/seq/hmmer/docs/node11.html
-##      (or any other HMMER docs mirror, node 11)
-##
-#******************************************************************************
-#*
-#*    This file is part of prolific, a library of useful C++ classes for
-#*    working with genomic sequence data and Profile HMMs.  Please see the
-#*    document CITING, which should have been included with this file.  You may
-#*    use at will, subject to the license (Apache v2.0), but *please cite the
-#*    relevant papers* in your documentation and publications associated with
-#*    uses of this library.  Thank you!
-#*
-#*    Copyright (C) 2008, 2011 by Paul T. Edlefsen, Fred Hutchinson Cancer
-#*    Research Center.
-#*
+/**
+ * \file Profile.hpp
+ * \author  D'Oleris Paul Thatcher Edlefsen   paul@galosh.org
+ *
+ * ---------------------------------------------------------------------------##
+ *  Library:
+ *      galosh::prolific
+ *  File:
+ *      Profile.hpp
+ *  Author:
+ *      D'Oleris Paul Thatcher Edlefsen   paul@galosh.org
+ *  Description:
+ *      Class definition for the Galosh Profile HMM class.  A Profile is a data
+ *      structure for the model parameters.  Conceptually, for every position
+ *      of the profile there are a bunch of parameters for each kind of Plan 7
+ *      profile transition/emission.  We make this a vector of maps from
+ *      ProfileKeys (eg. Transition) to maps from ProfileKey-specific params
+ *      (eg. Transition_M_to_D) to the values of those params.
+ *
+ *      Also defines dirichlet priors for each set of profile parameters.
+ *
+ *      More about Plan7 can be found at
+ *      http://www.csb.yale.edu/userguides/seq/hmmer/docs/node11.html
+ *      (or any other HMMER docs mirror, node 11)
+ *
+ ******************************************************************************
+ *
+ *    This file is part of prolific, a library of useful C++ classes for
+ *    working with genomic sequence data and Profile HMMs.  Please see the
+ *    document CITING, which should have been included with this file.  You may
+ *    use at will, subject to the license (Apache v2.0), but *please cite the
+ *    relevant papers* in your documentation and publications associated with
+ *    uses of this library.  Thank you!
+ *
+ *    Copyright (C) 2008, 2011 by Paul T. Edlefsen, Fred Hutchinson Cancer
+ *    Research Center.
+ *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
  *    You may obtain a copy of the License at
@@ -42,7 +46,7 @@
  *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
-#*****************************************************************************/
+ *****************************************************************************/
 
 #if     _MSC_VER > 1000
 #pragma once
@@ -82,7 +86,12 @@ using std::vector;
 
 #include <seqan/basic.h>
 
-/// Note that in the ProfileTreeRoot code we differentiate between size(), which returns the actual underlying size of the vector that holds the ProfilePositions, and length(), which might be overridden to return something other than size() (as it is in the case of the PositionEntente in DynamicProgramming.hpp).  Also for this reason we differentiate between operator[] (which might be overridden) and vector<ProfilePosition<ResidueType, ProbabilityType> >::operator[] (which always returns the corresponding index into the underlying array).
+/// Note that in the ProfileTreeRoot code we differentiate between size(), which returns the 
+/// actual underlying size of the vector that holds the ProfilePositions, and length(), which
+/// might be overridden to return something other than size() (as it is in the case of the 
+/// PositionEntente in DynamicProgramming.hpp).  Also for this reason we differentiate between 
+/// operator[] (which might be overridden) and vector<ProfilePosition<ResidueType, ProbabilityType> >\::operator[]
+/// (which always returns the corresponding index into the underlying array).
 
 namespace galosh {
 

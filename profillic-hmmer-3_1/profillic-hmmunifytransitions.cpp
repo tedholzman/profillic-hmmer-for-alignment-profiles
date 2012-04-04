@@ -1,5 +1,5 @@
 /**
- * \file profillic-hmmunifytransitions.hpp
+ * \file profillic-hmmunifytransitions.cpp
  * hmmstat: display summary statistics for an HMM database.
  * 
  * Example:

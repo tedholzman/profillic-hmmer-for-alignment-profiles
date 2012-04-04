@@ -1,28 +1,28 @@
-/*---------------------------------------------------------------------------##
-##  Library:
-##      galosh::prolific
-##  File:
-##      ProlificParameters.hpp
-##  Author:
-##      D'Oleris Paul Thatcher Edlefsen   paul@galosh.org
-##  Description:
-##      The galosh::Parameters decendent for programs using the
-##      prolific library (inherits from
-##      galosh::DynamicProgramming::Parameters).  Adds parameters relating to
-##      priors and initial values for Profile HMMs.
-#*
-#******************************************************************************
-#*
-#*    This file is part of prolific, a library of useful C++ classes for
-#*    working with genomic sequence data and Profile HMMs.  Please see the
-#*    document CITING, which should have been included with this file.  You may
-#*    use at will, subject to the license (Apache v2.0), but *please cite the
-#*    relevant papers* in your documentation and publications associated with
-#*    uses of this library.  Thank you!
-#*
-#*    Copyright (C) 2008, 2011 by Paul T. Edlefsen, Fred Hutchinson Cancer
-#*    Research Center.
-#*
+/**
+ * \file ProlificParameters.hpp
+ * \author D'Oleris Paul Thatcher Edlefsen   paul@galosh.org
+ *  \par Library:
+ *      galosh::prolific
+ *  \par File:
+ *      ProlificParameters.hpp
+ *  \brief
+ * The galosh::Parameters descendant for programs using the
+ * prolific library (inherits from
+ * galosh::DynamicProgramming::Parameters).  Adds parameters relating to
+ * priors and initial values for Profile HMMs.
+ *
+ * \par Overview:
+ *    This file is part of prolific, a library of useful C++ classes for
+ *    working with genomic sequence data and Profile HMMs.  Please see the
+ *    document CITING, which should have been included with this file.  You may
+ *    use at will, subject to the license (Apache v2.0), but *please cite the
+ *    relevant papers* in your documentation and publications associated with
+ *    uses of this library.  Thank you!
+ *
+ *    \copyright &copy; 2008, 2011 by Paul T. Edlefsen, Fred Hutchinson Cancer
+ *    Research Center.
+ *
+ *    \par License:
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
  *    You may obtain a copy of the License at
@@ -34,7 +34,7 @@
  *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
-#*****************************************************************************/
+ *****************************************************************************/
 
 #if     _MSC_VER > 1000
 #pragma once
@@ -42,6 +42,8 @@
 
 #ifndef __GALOSH_PROLIFICPARAMETERS_HPP__
 #define __GALOSH_PROLIFICPARAMETERS_HPP__
+
+#include "Prolific.hpp"
 
 #include "Parameters.hpp"
 using galosh::Parameters;
@@ -139,7 +141,7 @@ template <class ResidueType,
        *
        * @see useDeletionsForInsertionsParameters
        */
-      vector<double> * expectedDeletionsCounts;
+      vector<double> & expectedDeletionsCounts;
   #define DEFAULT_expectedDeletionsCounts NULL
 
       /**
@@ -153,7 +155,7 @@ template <class ResidueType,
        *
        * @see useDeletionsForInsertionsParameters
        */
-      vector<double> * expectedInsertionsCounts;
+      vector<double> & expectedInsertionsCounts;
   #define DEFAULT_expectedInsertionsCounts NULL
 
       /**
@@ -172,7 +174,7 @@ template <class ResidueType,
        *
        * @see useDeletionsForInsertionsParameters
        */
-      vector<double> * expectedDeletionLengthAsProfileLengthFractions;
+      vector<double> & expectedDeletionLengthAsProfileLengthFractions;
   #define DEFAULT_expectedDeletionLengthAsProfileLengthFractions NULL
 
       /**
@@ -188,7 +190,7 @@ template <class ResidueType,
        *
        * @see useDeletionsForInsertionsParameters
        */
-      vector<double> * expectedInsertionLengthAsProfileLengthFractions;
+      vector<double> & expectedInsertionLengthAsProfileLengthFractions;
   #define DEFAULT_expectedInsertionLengthAsProfileLengthFractions NULL
 
       /**

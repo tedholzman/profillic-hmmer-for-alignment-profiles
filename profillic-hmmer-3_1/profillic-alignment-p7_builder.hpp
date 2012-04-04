@@ -1,18 +1,19 @@
 /**
- * \file profillic-p7_builder.hpp
- */
-
-#ifndef __GALOSH_PROFILLICP7BUILDER_HPP__
-#define __GALOSH_PROFILLICP7BUILDER_HPP__
-
-/* Standardized pipeline for construction of new HMMs.
- * 
+ * \file profillic-alignment-p7_builder.hpp
+ * \brief Standardized pipeline for construction of new HMMs.
+ * \details
+ * <pre>
  * Contents:
  *    1. P7_BUILDER: allocation, initialization, destruction
  *    2. Standardized model construction API.
  *    3. Internal functions.
  *    4. Copyright and license information
+ * </pre>
  */   
+
+
+#ifndef __GALOSH_PROFILLICP7BUILDER_HPP__
+#define __GALOSH_PROFILLICP7BUILDER_HPP__
 extern "C" {
 #include "p7_config.h"
 }
@@ -46,14 +47,16 @@ static int
 profillic_annotate_model(P7_HMM *hmm, ESL_MSA * msa);
 int
 profillic_p7_Builder_MaxLength (P7_HMM *hmm, double emit_thresh);
-///
-/////////////// End profillic-hmmer //////////////////////////////////
+//
+/* /////////////// End profillic-hmmer ////////////////////////////////// */
 
 /*****************************************************************
  * 1. P7_BUILDER: allocation, initialization, destruction
  *****************************************************************/
 
-/* Function:  p7_builder_Create()
+/**
+ * <pre>
+ * Function:  p7_builder_Create()
  * Synopsis:  Create a default HMM construction configuration.
  *
  * Purpose:   Create a construction configuration for building
@@ -74,6 +77,7 @@ profillic_p7_Builder_MaxLength (P7_HMM *hmm, double emit_thresh);
  *            See <hmmbuild.c> or other big users of the build
  *            pipeline for an example of appropriate <ESL_GETOPTS>
  *            initializations of these 24 options.
+ * </pre>
  */
 P7_BUILDER *
 profillic_p7_builder_Create(const ESL_GETOPTS *go, const ESL_ALPHABET *abc)
@@ -183,7 +187,9 @@ profillic_p7_builder_Create(const ESL_GETOPTS *go, const ESL_ALPHABET *abc)
 }
 
 
-/* Function:  p7_builder_LoadScoreSystem()
+/**
+ * <pre>
+ * Function:  p7_builder_LoadScoreSystem()
  * Synopsis:  Load a standard score system for single sequence queries.
  *
  * Purpose:   Initialize the builder <bld> to be able to parameterize
@@ -219,6 +225,7 @@ profillic_p7_builder_Create(const ESL_GETOPTS *go, const ESL_ALPHABET *abc)
  *            for the user.
  *
  * Throws:    <eslEMEM> on allocation failure.
+ * </pre>
  */
 int
 profillic_p7_builder_LoadScoreSystem(P7_BUILDER *bld, const char *matrix, double popen, double pextend, P7_BG *bg)
@@ -272,7 +279,9 @@ profillic_p7_builder_LoadScoreSystem(P7_BUILDER *bld, const char *matrix, double
 }
 
 
-/* Function:  p7_builder_SetScoreSystem()
+/**
+ * <pre>
+ * Function:  p7_builder_SetScoreSystem()
  * Synopsis:  Initialize score system for single sequence queries.
  *
  * Purpose:   Initialize the builder <bld> to be able to parameterize
@@ -314,6 +323,7 @@ profillic_p7_builder_LoadScoreSystem(P7_BUILDER *bld, const char *matrix, double
  *            for the user.
  *
  * Throws:    <eslEMEM> on allocation failure.
+ * </pre>
  */
 int
 profillic_p7_builder_SetScoreSystem(P7_BUILDER *bld, const char *mxfile, const char *env, double popen, double pextend, P7_BG *bg)
@@ -378,10 +388,13 @@ profillic_p7_builder_SetScoreSystem(P7_BUILDER *bld, const char *mxfile, const c
 
 
 
-/* Function:  p7_builder_Destroy()
+/**
+ * <pre>
+ * Function:  p7_builder_Destroy()
  * Synopsis:  Free a <P7_BUILDER>
  *
  * Purpose:   Frees a <P7_BUILDER> object.
+ * </pre>
  */
 void
 profillic_p7_builder_Destroy(P7_BUILDER *bld)
@@ -415,7 +428,9 @@ static int    annotate             (P7_BUILDER *bld, const ESL_MSA *msa, P7_HMM 
 static int    calibrate            (P7_BUILDER *bld, P7_HMM *hmm, P7_BG *bg, P7_PROFILE **opt_gm, P7_OPROFILE **opt_om);
 static int    make_post_msa        (P7_BUILDER *bld, const ESL_MSA *premsa, const P7_HMM *hmm, P7_TRACE **tr, ESL_MSA **opt_postmsa);
 
-/* Function:  p7_Builder()
+/** 
+ * <pre>
+ * Function:  p7_Builder()
  * Synopsis:  Build a new HMM from an MSA.
  *
  * Purpose:   Take the multiple sequence alignment <msa> and a build configuration <bld>,
@@ -451,6 +466,7 @@ static int    make_post_msa        (P7_BUILDER *bld, const ESL_MSA *premsa, cons
  *            <eslEINVAL> if relative weights couldn't be calculated from <msa>.
  *
  * Xref:      J4/30.
+ * </pre>
  */
 template <class ProfileType>
 int
@@ -464,7 +480,7 @@ profillic_p7_Builder(P7_BUILDER *bld, ESL_MSA *msa, ProfileType const * const pr
   P7_TRACE ***tr_ptr   = (opt_trarr != NULL || opt_postmsa != NULL) ? &tr : NULL;
   int         status;
 
-  // NOTE: This checks the alignment for "missing data chars" ('~'), which is not relevant to a profillic profile consensus, but should be fine to call.
+  /// \note This checks the alignment for "missing data chars" ('~'), which is not relevant to a profillic profile consensus, but should be fine to call.
   if ((status =  validate_msa         (bld, msa))                       != eslOK) goto ERROR;
 
   /// The following creates hashcode from the msa (or the consensus sequence of the galosh profile):
@@ -475,7 +491,7 @@ profillic_p7_Builder(P7_BUILDER *bld, ESL_MSA *msa, ProfileType const * const pr
     if ((status =  relative_weights     (bld, msa))                       != eslOK) goto ERROR;
   }
 
-  // NOTE: this identifies "sequence fragments" as having length less than <fragthresh> times the profile length, and converts leading and trailing gaps into missing-data chars.
+  /// \note this identifies "sequence fragments" as having length less than <fragthresh> times the profile length, and converts leading and trailing gaps into missing-data chars.
   if ((status =  esl_msa_MarkFragments(msa, bld->fragthresh))           != eslOK) goto ERROR;
 
   if ((status =  profillic_build_model          (bld, msa, profile_ptr, &hmm, tr_ptr))         != eslOK) goto ERROR;
@@ -507,7 +523,9 @@ profillic_p7_Builder(P7_BUILDER *bld, ESL_MSA *msa, ProfileType const * const pr
 }
 
 
-/* Function:  p7_SingleBuilder()
+/**
+ * <pre>
+ * Function:  p7_SingleBuilder()
  * Synopsis:  Build a new HMM from a single sequence.
  *
  * Purpose:   Take the sequence <sq> and a build configuration <bld>, and
@@ -528,6 +546,7 @@ profillic_p7_Builder(P7_BUILDER *bld, ESL_MSA *msa, ProfileType const * const pr
  *
  * Throws:    <eslEMEM> on allocation error.
  *            <eslEINVAL> if <bld> isn't properly configured somehow.
+ * </pre>
  */
 int
 profillic_p7_SingleBuilder(P7_BUILDER *bld, ESL_SQ *sq, P7_BG *bg, P7_HMM **opt_hmm,
@@ -572,7 +591,9 @@ profillic_p7_SingleBuilder(P7_BUILDER *bld, ESL_SQ *sq, P7_BG *bg, P7_HMM **opt_
 }
 
 
-/* Function:  profillic_p7_Builder_MaxLength()
+/**
+ * <pre>
+ * Function:  profillic_p7_Builder_MaxLength()
  *
  * Purpose:  Compute the maximum likely length of an emitted sequence
  *
@@ -672,7 +693,7 @@ profillic_p7_SingleBuilder(P7_BUILDER *bld, ESL_SQ *sq, P7_BG *bg, P7_HMM **opt_
  * Args:      hmm         - p7_HMM (required for the transition probabilities)
  *
  * Returns:   <eslOK> on success. The max length is set in hmm->max_length.
-
+ * </pre>
  */
 int
 profillic_p7_Builder_MaxLength (P7_HMM *hmm, double emit_thresh)
@@ -795,7 +816,9 @@ profillic_p7_Builder_MaxLength (P7_HMM *hmm, double emit_thresh)
  *****************************************************************/
 
 
-/* validate_msa:
+/**
+ * <pre>
+ * validate_msa:
  * SRE, Thu Dec  3 16:10:31 2009 [J5/119; bug #h70 fix]
  * 
  * HMMER uses a convention for missing data characters: they
@@ -807,6 +830,7 @@ profillic_p7_Builder_MaxLength (P7_HMM *hmm, double emit_thresh)
  * other way.
  * 
  * This validation step costs negligible time.
+ * </pre>
  */
 static int
 validate_msa(P7_BUILDER *bld, ESL_MSA *msa)
@@ -836,7 +860,7 @@ relative_weights(P7_BUILDER *bld, ESL_MSA *msa)
   int status = eslOK;
 
   if      (bld->wgt_strategy == p7_WGT_NONE)                    { esl_vec_DSet(msa->wgt, msa->nseq, 1.); }
-  else if (bld->wgt_strategy == p7_WGT_GIVEN)                   ;
+  else if (bld->wgt_strategy == p7_WGT_GIVEN)                   {/* do nothing */}
   else if (bld->wgt_strategy == p7_WGT_PB)                      status = esl_msaweight_PB(msa); 
   else if (bld->wgt_strategy == p7_WGT_GSC)                     status = esl_msaweight_GSC(msa); 
   else if (bld->wgt_strategy == p7_WGT_BLOSUM)                  status = esl_msaweight_BLOSUM(msa, bld->wid); 
@@ -847,12 +871,14 @@ relative_weights(P7_BUILDER *bld, ESL_MSA *msa)
 }
 
 
-/* build_model():
+/**
+ * <pre> 
+ * build_model():
  * Given <msa>, choose HMM architecture, collect counts;
  * upon return, <*ret_hmm> is newly allocated and contains
  * relative-weighted observed counts.
+ * </pre>
  */
-
 template <typename ProfileType>
 static int
 profillic_p7_Profillicmodelmaker(P7_BUILDER *bld, ESL_MSA * msa, ProfileType const & profile, P7_HMM **ret_hmm)
@@ -874,16 +900,16 @@ profillic_p7_Profillicmodelmaker(P7_BUILDER *bld, ESL_MSA * msa, ProfileType con
   M = static_cast<int>( profile.length() );
   if (M == 0) { status = eslENORESULT; goto ERROR; }
 
-  // NOTE that HMMER3 has a slightly different model, starting in
-  // Begin rather than in preAlign, and with 3 legal transitions out
-  // of Begin (one of these is to PreAlign).  The galosh profile model
-  // begins in preAlign and transitions to Begin, and from there to
-  // either Match or Delete.  One implication is that galosh profiles
-  // enforce t[ 0 ][ p7H_MI ] to be the same as t[ 0 ][ p7H_II ], but
-  // HMMER3 does not.  Another way to say this is that H3 uses affine
-  // pre-aligns, and prohibits pre-align -to- delete transitions,
-  // whereas galosh / profillic uses non-affine pre-aligns and allows
-  // pre-align->delete.
+  /// \note NOTE that HMMER3 has a slightly different model, starting in
+  /// Begin rather than in preAlign, and with 3 legal transitions out
+  /// of Begin (one of these is to PreAlign).  The galosh profile model
+  /// begins in preAlign and transitions to Begin, and from there to
+  /// either Match or Delete.  One implication is that galosh profiles
+  /// enforce t[ 0 ][ p7H_MI ] to be the same as t[ 0 ][ p7H_II ], but
+  /// HMMER3 does not.  Another way to say this is that H3 uses affine
+  /// pre-aligns, and prohibits pre-align -to- delete transitions,
+  /// whereas galosh / profillic uses non-affine pre-aligns and allows
+  /// pre-align->delete.
 
   /* Build count model from profile */
   if ((hmm    = p7_hmm_Create(M, msa->abc)) == NULL)  { status = eslEMEM; goto ERROR; }
@@ -897,7 +923,7 @@ profillic_p7_Profillicmodelmaker(P7_BUILDER *bld, ESL_MSA * msa, ProfileType con
   hmm->t[ 0 ][ p7H_MI ] =
      toDouble(
 /// TAH 3/12 mod for using alignment profiles.
-///  Note:  for 0th element, Insertion distribution is equivalent to
+///  \note  for 0th element, Insertion distribution is equivalent to
 ///         PreAlign distribution
 ///    profile[ galosh::Transition::fromPreAlign ][ galosh::TransitionFromPreAlign::toPreAlign ]
     	   profile[ 0 ][galosh::profile_Insertion_distribution_tag()][ galosh::TransitionFromInsertion::toInsertion ]
@@ -1030,7 +1056,7 @@ profillic_p7_Profillicmodelmaker(P7_BUILDER *bld, ESL_MSA * msa, ProfileType con
       hmm->t[ pos_i + 1 ][ p7H_MM ] =
         toDouble(
         	  /// TAH 3/12 mod for using alignment profiles
-          ///
+                  ///
         	  ///profile[ galosh::Transition::fromMatch ][ galosh::TransitionFromMatch::toMatch ]
         	  profile[ pos_i ][galosh::profile_Match_distribution_tag()][ galosh::TransitionFromMatch::toMatch ]
         );
@@ -1101,7 +1127,9 @@ profillic_p7_Profillicmodelmaker(P7_BUILDER *bld, ESL_MSA * msa, ProfileType con
   return status;
 }
   
-/* build_model():
+/** 
+ * build_model():
+ *
  * Given <msa>, choose HMM architecture, collect counts;
  * upon return, <*ret_hmm> is newly allocated and contains
  * relative-weighted observed counts.
@@ -1139,7 +1167,9 @@ profillic_build_model(P7_BUILDER *bld, ESL_MSA *msa, ProfileType const * const p
 }
 
 
-/* Function: annotate_model()
+/**
+ * <pre>
+ *  Function: annotate_model()
  * 
  * Purpose:  Transfer rf, cs, and other optional annotation from the alignment
  *           to the new model.
@@ -1150,6 +1180,7 @@ profillic_build_model(P7_BUILDER *bld, ESL_MSA *msa, ProfileType const * const p
  * Return:   <eslOK> on success.
  *
  * Throws:   <eslEMEM> on allocation error.
+ * </pre>
  */
 static int
 profillic_annotate_model(P7_HMM *hmm, ESL_MSA * msa)
@@ -1201,7 +1232,8 @@ profillic_annotate_model(P7_HMM *hmm, ESL_MSA * msa)
   return status;
 }
 
-/* set_effective_seqnumber()
+/**
+ * effective_seqnumber()
  *
  * <hmm> comes in with weighted observed counts. It goes out with
  * those observed counts rescaled to sum to the "effective sequence
@@ -1262,7 +1294,8 @@ effective_seqnumber(P7_BUILDER *bld, const ESL_MSA *msa, P7_HMM *hmm, const P7_B
 }
 
 
-/* parameterize()
+/**
+ * parameterize()
  * Converts counts to probability parameters.
  */
 static int
@@ -1330,8 +1363,8 @@ profillic_parameterize(P7_BUILDER *bld, P7_HMM *hmm, int const use_priors)
 }
 
 
-
-/* annotate()
+/**
+ * annotate()
  * Transfer annotation information from MSA to new HMM.
  * Also sets model-specific residue composition (hmm->compo).
  */
@@ -1361,7 +1394,8 @@ annotate(P7_BUILDER *bld, const ESL_MSA *msa, P7_HMM *hmm)
   return status;
 }
 
-/* calibrate()
+/**
+ * calibrate()
  * 
  * Sets the E value parameters of the model with two short simulations.
  * A profile and an oprofile are created here. If caller wants to keep either
@@ -1383,7 +1417,8 @@ calibrate(P7_BUILDER *bld, P7_HMM *hmm, P7_BG *bg, P7_PROFILE **opt_gm, P7_OPROF
 }
 
 
-/* make_post_msa()
+/**
+ * make_post_msa()
  * 
  * Optionally, we can return the alignment we actually built the model
  * from (including RF annotation on assigned consensus columns, and any
@@ -1408,9 +1443,6 @@ make_post_msa(P7_BUILDER *bld, const ESL_MSA *premsa, const P7_HMM *hmm, P7_TRAC
   if (postmsa != NULL) esl_msa_Destroy(postmsa);
   return status;
 }
-
-
-
 
 /*---------------- end, internal functions ----------------------*/
 

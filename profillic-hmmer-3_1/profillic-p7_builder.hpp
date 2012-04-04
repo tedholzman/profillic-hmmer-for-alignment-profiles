@@ -1,3 +1,7 @@
+/**
+ * \file profillic-p7_builder.hpp
+ *
+ * --------------------------------------------------------------------------*/
 #ifndef __GALOSH_PROFILLICP7BUILDER_HPP__
 #define __GALOSH_PROFILLICP7BUILDER_HPP__
 

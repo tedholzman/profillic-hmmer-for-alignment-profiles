@@ -5028,7 +5028,7 @@ static dynamicprogramming_DeletionOut_subcell_tag const DeletionOut =
       {
         uint32_t last_pos = distances.size() - 1;
         uint32_t pos_i;
-        uint32_t last_seq = distances[ 0 ].size() - 1;
+        uint32_t last_seq = (distances[ 0 ]).std::vector<SequencePositionEntenteDistances>::size() - 1;
         uint32_t seq_i;
         for( seq_i = 0; seq_i <= last_seq ; seq_i++ ) {
           os << "From Sequence " << seq_i << ":" << endl;
@@ -23706,7 +23706,7 @@ static dynamicprogramming_DeletionOut_subcell_tag const DeletionOut =
         	      prof.clear();
         	      int lcount = 0;  //debug
               while( !is.eof()) {
-            	      typename DynamicProgramming<ResidueType,ProbabilityType,ScoreType,MatrixValueType>::AlignmentProfilePosition curPosition;
+            	  typename DynamicProgramming<ResidueType,ProbabilityType,ScoreType,MatrixValueType>::AlignmentProfilePosition curPosition;
             	      //is >> "[ ";
                   assert(is.get() == '[');
                   assert(is.get() == ' ');

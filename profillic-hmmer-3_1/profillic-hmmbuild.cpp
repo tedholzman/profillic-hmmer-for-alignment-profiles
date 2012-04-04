@@ -1,5 +1,6 @@
 /**
  * \file profillic-hmmbuild.cpp
+ * \brief
  * Profile HMM construction from a multiple sequence alignment or profillic profile
  */
 extern "C" {
@@ -41,13 +42,13 @@ extern "C" {
 #include "hmmer.h"
 }
 
-/////////////// For profillic-hmmer //////////////////////////////////
+/* /////////////// For profillic-hmmer ////////////////////////////////// */
 #include "profillic-hmmer.hpp"
 #include "profillic-p7_builder.hpp"
 //#include "profillic-esl_msa.hpp"
 #include "profillic-esl_msafile.hpp"
 
-/// Updated notices:
+// Updated notices:
 #define PROFILLIC_HMMER_VERSION "1.0a"
 #define PROFILLIC_HMMER_DATE "July 2011"
 #define PROFILLIC_HMMER_COPYRIGHT "Copyright (C) 2011 Paul T. Edlefsen, Fred Hutchinson Cancer Research Center."
@@ -60,7 +61,9 @@ extern "C" {
  * 1. Miscellaneous functions for H3
  *****************************************************************/
 
-/** Function:  p7_banner()
+/** 
+ * <pre>
+ * Function:  p7_banner()
  * Synopsis:  print standard HMMER application output header
  * Incept:    SRE, Wed May 23 10:45:53 2007 [Janelia]
  *
@@ -98,6 +101,7 @@ extern "C" {
  *    HMMER_LICENSE   "Freely licensed under the Janelia Software License."
  *
  * Returns:   (void)
+ * </pre>
  */
 void
 profillic_p7_banner(FILE *fp, char *progname, char *banner)
@@ -117,7 +121,7 @@ profillic_p7_banner(FILE *fp, char *progname, char *banner)
   if (appname != NULL) free(appname);
   return;
 }
-/////////////// End profillic-hmmer //////////////////////////////////
+/* /////////////// End profillic-hmmer ////////////////////////////////// */
 
 typedef struct {
 #ifdef HMMER_THREADS
@@ -223,7 +227,8 @@ static ESL_OPTIONS options[] = {
 };
 
 
-/** struct cfg_s : "Global" application configuration shared by all threads/processes
+/** 
+ * struct cfg_s : "Global" application configuration shared by all threads/processes
  * 
  * This structure is passed to routines within main.c, as a means of semi-encapsulation
  * of shared data amongst different parallel processes (threads or MPI processes).
@@ -362,6 +367,11 @@ process_commandline(int argc, char **argv, ESL_GETOPTS **ret_go, char **ret_hmmf
   exit(status);
 }
 
+/**
+ * profillic_output_header
+ *
+ * display input data summary and program parameters
+ */
 static int
 profillic_output_header(const ESL_GETOPTS *go, const struct cfg_s *cfg)
 {
@@ -448,7 +458,8 @@ main(int argc, char **argv)
    */
   process_commandline(argc, argv, &go, &cfg.hmmfile, &cfg.alifile);    
 
-  /** Initialize what we can in the config structure (without knowing the alphabet yet).
+  /** 
+   * Initialize what we can in the config structure (without knowing the alphabet yet).
    * Fields controlled by masters are set up in usual_master() or mpi_master()
    * Fields used by workers are set up in mpi_worker()
    */
@@ -535,7 +546,9 @@ main(int argc, char **argv)
 }
 
 
-/** usual_master()
+/** 
+ * usual_master()
+ *
  * The usual version of hmmbuild, serial or threaded
  * For each MSA, build an HMM and save it.
  * 
@@ -556,7 +569,9 @@ profillic_usual_master(const ESL_GETOPTS *go, struct cfg_s *cfg)
   int              i;
   int              status;
 
-  /** Open files, set alphabet.
+  /**
+   * <pre> 
+   * Open files, set alphabet.
    *   cfg->afp       - open alignment file for input
    *   cfg->abc       - alphabet expected or guessed in ali file
    *   cfg->hmmfp     - open HMM file for output
@@ -564,6 +579,7 @@ profillic_usual_master(const ESL_GETOPTS *go, struct cfg_s *cfg)
    *   cfp->ofp       - optional open output file, or stdout
    * The mpi_master's version of this is in init_master_cfg(), with
    * different error handling (necessitated by our MPI design).
+   * </pre>
    */
   if      (esl_opt_GetBoolean(go, "--amino")||esl_opt_IsUsed(go, "--profillic-amino"))   cfg->abc = esl_alphabet_Create(eslAMINO);
   else if (esl_opt_GetBoolean(go, "--dna")||esl_opt_IsUsed(go, "--profillic-dna"))     cfg->abc = esl_alphabet_Create(eslDNA);
@@ -660,7 +676,7 @@ profillic_usual_master(const ESL_GETOPTS *go, struct cfg_s *cfg)
 #ifdef HMMER_THREADS
   if ((( cfg->afp->format != eslMSAFILE_PROFILLIC )) && (ncpus > 0)) {
     thread_loop(threadObj, queue, cfg, go);
-  } else if(cfg->fmt = eslMSAFILE_PROFILLIC) {
+  } else if(cfg->fmt == eslMSAFILE_PROFILLIC) {  /// TAH 3/12 replace = with ==; make sure it works!
     if( cfg->abc->type == eslDNA ) {
       galosh::ProfileTreeRoot<seqan::Dna, floatrealspace> profile;
       profillic_serial_loop(info, cfg, &profile, go);
@@ -714,8 +730,10 @@ profillic_usual_master(const ESL_GETOPTS *go, struct cfg_s *cfg)
 }
 
 #ifdef HAVE_MPI
-/** mpi_master()
+/** 
+ * mpi_master()
  * The MPI version of hmmbuild.
+ *
  * Follows standard pattern for a master/worker load-balanced MPI program (J1/78-79).
  * 
  * A master can only return if it's successful. 
@@ -755,7 +773,9 @@ mpi_master(const ESL_GETOPTS *go, struct cfg_s *cfg)
   int         rstatus;			/* status specifically from msa read */
   MPI_Status  mpistatus; 
 
-  /* Open files, set alphabet.
+  /**
+   * <pre>
+   * Open files, set alphabet.
    *   cfg->abc       - alphabet expected or guessed in ali file
    *   cfg->afp       - open alignment file for input
    *   cfg->hmmfp     - open HMM file for output
@@ -763,6 +783,7 @@ mpi_master(const ESL_GETOPTS *go, struct cfg_s *cfg)
    *   cfg->postmsafp - optional open MSA resave file, or NULL
    * Error handling requires first broadcasting a non-OK status to workers
    * to get them to shut down cleanly.
+   * </pre>
    */
   if      (esl_opt_GetBoolean(go, "--amino"))   cfg->abc = esl_alphabet_Create(eslAMINO);
   else if (esl_opt_GetBoolean(go, "--dna"))     cfg->abc = esl_alphabet_Create(eslDNA);
@@ -820,7 +841,8 @@ mpi_master(const ESL_GETOPTS *go, struct cfg_s *cfg)
   ESL_DPRINTF1(("%d workers are initialized\n", cfg->nproc-1));
 
 
-  /** Main loop: combining load workers, send/receive, clear workers loops;
+  /** 
+   * Main loop: combining load workers, send/receive, clear workers loops;
    * also, catch error states and die later, after clean shutdown of workers.
    * 
    * When a recoverable error occurs, have_work = FALSE, xstatus !=
@@ -920,7 +942,10 @@ mpi_master(const ESL_GETOPTS *go, struct cfg_s *cfg)
   else if (xstatus != eslOK) { MPI_Finalize(); p7_Fail(errmsg); }
   else                        return;
 }
-
+/**
+ * mpi_init_open_failure
+ *
+ */
 static void
 mpi_init_open_failure(ESLX_MSAFILE *afp, int status)
 {
@@ -929,6 +954,10 @@ mpi_init_open_failure(ESLX_MSAFILE *afp, int status)
   eslx_msafile_OpenFailure(afp, status);
 }
 
+/**
+ * mpi_init_other_failure
+ *
+ */
 static void
 mpi_init_other_failure(char *format, ...)
 {
@@ -948,6 +977,10 @@ mpi_init_other_failure(char *format, ...)
   exit(1);
 }
 
+/**
+ * mpi_worker
+ *
+ */
 static void
 mpi_worker(const ESL_GETOPTS *go, struct cfg_s *cfg)
 {
@@ -974,7 +1007,7 @@ mpi_worker(const ESL_GETOPTS *go, struct cfg_s *cfg)
   if (xstatus != eslOK) return; /* master saw an error code; workers do an immediate normal shutdown. */
   ESL_DPRINTF2(("worker %d: sees that master has initialized\n", cfg->my_rank));
   
-  /* Master now broadcasts worker initialization information (alphabet type) 
+  /** Master now broadcasts worker initialization information (alphabet type) 
    * Workers returns their status post-initialization.
    * Initial allocation of wbuf must be large enough to guarantee that
    * we can pack an error result into it, because after initialization,
@@ -1020,7 +1053,6 @@ mpi_worker(const ESL_GETOPTS *go, struct cfg_s *cfg)
         hmm->eff_nseq = 1;
       }
 
-
       ESL_DPRINTF2(("worker %d: has produced an HMM %s\n", cfg->my_rank, hmm->name));
 
       /* Calculate upper bound on size of sending status, HMM, and optional postmsa; make sure wbuf can hold it. */
@@ -1062,7 +1094,10 @@ mpi_worker(const ESL_GETOPTS *go, struct cfg_s *cfg)
 }
 #endif /*HAVE_MPI*/
 
-
+/**
+ * profillic_serial_loop
+ *
+ */
 template <class ProfileType>
 static void
 profillic_serial_loop(WORKER_INFO *info, struct cfg_s *cfg, ProfileType * profile_ptr, const ESL_GETOPTS *go)
@@ -1105,14 +1140,12 @@ profillic_serial_loop(WORKER_INFO *info, struct cfg_s *cfg, ProfileType * profil
       entropy = p7_MeanMatchRelativeEntropy(hmm, info->bg);
       if ((status = output_result(cfg, errmsg, cfg->nali, msa, hmm, postmsa, entropy))         != eslOK) p7_Fail(errmsg);
 
-
-
       p7_hmm_Destroy(hmm);
       esl_msa_Destroy(msa);
       esl_msa_Destroy(postmsa);
     }
-  // TODO: DOPTE ERE I AM.  Now there's not status returned!
-  // Note weird hack to make sure we only try to read the profillic profile in once.  TODO: Why doesn't EOF signal it?
+  /// \todo DOPTE ERE I AM.  Now there's no status returned!
+  /// \note weird hack to make sure we only try to read the profillic profile in once.  \todo Why doesn't EOF signal it?
 //  if( cfg->afp->format == eslMSAFILE_PROFILLIC ) {
 //    status = eslEOF;
 //  }
@@ -1360,7 +1393,10 @@ output_result(const struct cfg_s *cfg, char *errbuf, int msaidx, ESL_MSA *msa, P
 
 
 
-/** set_msa_name() 
+/**
+ * <pre> 
+ * set_msa_name() 
+ *
  * Make sure the alignment has a name; this name will
  * then be transferred to the model.
  * 
@@ -1386,6 +1422,7 @@ output_result(const struct cfg_s *cfg, char *errbuf, int msaidx, ESL_MSA *msa, P
  * alignment 'til we're on the second one, these fatal errors
  * only happen after the first HMM has already been built.
  * Oh well.
+ * </pre>
  */
 static int
 set_msa_name(struct cfg_s *cfg, char *errbuf, ESL_MSA *msa)

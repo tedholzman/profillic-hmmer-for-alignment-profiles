@@ -178,6 +178,8 @@ QT_AUTOBRIEF           = NO
 # The new default is to treat a multi-line C++ comment block as a detailed 
 # description. Set this tag to YES if you prefer the old behaviour instead.
 
+MARKDOWN_SUPPORT       = NO
+
 MULTILINE_CPP_IS_BRIEF = NO
 
 # If the INHERIT_DOCS tag is set to YES (the default) then an undocumented 
@@ -203,7 +205,7 @@ TAB_SIZE               = 8
 # put the command \sideeffect (or @sideeffect) in the documentation, which 
 # will result in a user-defined paragraph with heading "Side Effects:". 
 # You can put \n's in the value part of an alias to insert newlines.
-
+#
 # Several of the comments in seqan and galosh contain \symbols that generate
 # errors or warnings in doxygen.  I'm using this section castrate them
 ALIASES                = \
@@ -219,7 +221,12 @@ ALIASES                = \
  Spec="" \
  geq="" \
  glos="" \
- s=""
+ s="" \
+ article="" \
+ alpha="" \
+ operator="" \
+ begin=""  \
+ end=""
 # Set the OPTIMIZE_OUTPUT_FOR_C tag to YES if your project consists of C 
 # sources only. Doxygen will then generate output that is more tailored for C. 
 # For instance, some of the names that are used will be different. The list 

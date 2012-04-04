@@ -1,8 +1,9 @@
-#ifndef __GALOSH_PROFILLICESLMSAFILE_HPP__
-#define __GALOSH_PROFILLICESLMSAFILE_HPP__
-
-/* Multiple sequence alignment file i/o 
- * 
+/**
+ * \file profillic-alignment-esl_msafile.hpp
+ * \brief
+ * Multiple sequence alignment file i/o 
+ * \details
+ * <pre>
  * Table of contents:
  *    1. Opening/closing an ESLX_MSAFILE.
  *    2. ESLX_MSAFILE_FMTDATA: optional added constraints on formats.
@@ -16,7 +17,11 @@
  *   10. Test driver.
  *   11. Examples.
  *   12. Copyright and license.
+ * </pre>
  */
+#ifndef __GALOSH_PROFILLICESLMSAFILE_HPP__
+#define __GALOSH_PROFILLICESLMSAFILE_HPP__
+
 extern "C" {
 #include "esl_config.h"
 }
@@ -64,9 +69,10 @@ profillic_esl_msafile_profile_Read(ESLX_MSAFILE *afp, ESL_MSA **ret_msa, Profile
  *****************************************************************/
 
 static int profillic_msafile_Create    (ESLX_MSAFILE **ret_afp);
-static int profillic_msafile_OpenBuffer(ESL_ALPHABET **byp_abc, ESL_BUFFER *bf, int format, ESLX_MSAFILE_FMTDATA *fmtd, ESLX_MSAFILE *afp);
-
-/* Function:  eslx_msafile_Open()
+static int profillic_msafile_OpenBuffer(ESL_ALPHABET **byp_abc, ESL_BUFFER *bf, int format, ESLX_MSAFILE_FMTDATA *fmtd, ESLX_MSAFILE *afp)
+/**
+ * <pre>
+ *
  * Synopsis:  Open a multiple sequence alignment file for input.
  *
  * Purpose:   Open a multiple sequence alignment file <msafile> for input.
@@ -202,6 +208,7 @@ static int profillic_msafile_OpenBuffer(ESL_ALPHABET **byp_abc, ESL_BUFFER *bf, 
  *            <eslEINVAL> if we tried to use <stdin> but the <stdin> stream was
  *            invalid (in an error state, <NULL>, or at <EOF>).
  *            On thrown exceptions, <*ret_afp> is <NULL>.
+ *   </pre>
  */
 int
 profillic_eslx_msafile_Open(ESL_ALPHABET **byp_abc, const char *msafile, const char *env, int format, ESLX_MSAFILE_FMTDATA *fmtd, ESLX_MSAFILE **ret_afp)
@@ -254,7 +261,7 @@ profillic_msafile_Create(ESLX_MSAFILE **ret_afp)
   return status;
 }
 
-/* All input sources funnel through here.
+/** All input sources funnel through here.
  * Here, <afp> is already allocated and initialized, and the input
  * <bf> is opened successfully.
  */
@@ -297,7 +304,9 @@ profillic_msafile_OpenBuffer(ESL_ALPHABET **byp_abc, ESL_BUFFER *bf, int format,
   /* ^^^^^^^^^^^^^^^^^  this test interacts tricksily with the #ifdef above */
   afp->abc = abc;	/* with afp->abc set, the inmap config functions know whether to do digital/text    */
 
-  /* Configure the format-specific, digital or text mode character
+  /**
+   * <pre>
+   * Configure the format-specific, digital or text mode character
    * input map in afp->inmap.
    * All of these must:
    *    
@@ -310,6 +319,7 @@ profillic_msafile_OpenBuffer(ESL_ALPHABET **byp_abc, ESL_BUFFER *bf, int format,
    *        non-whitespace character (isgraph()), or if the format is
    *        inherently restrictive and we should go with isalpha() +
    *        some other valid characters "_-.~*" instead.
+   * </pre>
    */
   switch (afp->format) {
   case eslMSAFILE_A2M:          status = esl_msafile_a2m_SetInmap(      afp); break;
@@ -322,7 +332,7 @@ profillic_msafile_OpenBuffer(ESL_ALPHABET **byp_abc, ESL_BUFFER *bf, int format,
   case eslMSAFILE_PSIBLAST:     status = esl_msafile_psiblast_SetInmap( afp); break;
   case eslMSAFILE_SELEX:        status = esl_msafile_selex_SetInmap(    afp); break;
   case eslMSAFILE_STOCKHOLM:    status = esl_msafile_stockholm_SetInmap(afp); break;
-  case eslMSAFILE_PROFILLIC:    status = eslOK; /* TODO: status = profillic_esl_msafile_profile_SetInmap(afp); */ break;
+  case eslMSAFILE_PROFILLIC:    status = eslOK; /** \todo status = profillic_esl_msafile_profile_SetInmap(afp); */ break;
   default: ESL_XEXCEPTION(eslENOFORMAT, "no such alignment file format");     break;
   }
 
@@ -341,14 +351,17 @@ profillic_msafile_OpenBuffer(ESL_ALPHABET **byp_abc, ESL_BUFFER *bf, int format,
  *# 6. Reading MSAs from input
  *****************************************************************/
 
-/* Function:  eslx_msafile_Read()
+/**
+ * <pre>
+ * Function:  eslx_msafile_Read()
+ *
  * Synopsis:  Read next MSA from input.
  *
  * Purpose:   Reads the next MSA from open MSA input <afp>, and return it in 
  *            <*ret_msa>.
  *
  * Args:      afp      - open alignment input stream
- 8            *ret_msa - RETURN: alignment
+ *            *ret_msa - RETURN: alignment
  *
  * Returns:   <eslOK> on success. 
  *
@@ -365,12 +378,13 @@ profillic_msafile_OpenBuffer(ESL_ALPHABET **byp_abc, ESL_BUFFER *bf, int format,
  *
  * Throws:    <eslEMEM> - an allocation failed.
  *            <eslESYS> - a system call such as fread() failed
- *            <eslEINCONCEIVABLE> - "impossible" corruption 
+ *            <eslEINCONCEIVABLE> - "impossible" corruption
+ * </pre> 
  */
 int
 profillic_eslx_msafile_Read(ESLX_MSAFILE *afp, ESL_MSA **ret_msa)
 {
- //TAH 2/12 Conversion to alignment profile
+ /// TAH 2/12 Conversion to alignment profile
 	return profillic_eslx_msafile_Read(afp, ret_msa, (galosh::AlignmentProfileAccessor<seqan::Dna, floatrealspace, floatrealspace, floatrealspace> *)NULL );
 }
 
@@ -418,7 +432,9 @@ profillic_eslx_msafile_Read(ESLX_MSAFILE *afp, ESL_MSA **ret_msa, ProfileType * 
  * 12.5. galosh profile format (from profilic)
  *****************************************************************/
 
-/* Function:  profillic_esl_msafile_profile_Read()
+/**
+ * <pre> 
+ * Function:  profillic_esl_msafile_profile_Read()
  * Paul T Edlefsen   paul@galosh.org   February 19, 2012.
  *
  * Synopsis:  Read a profillic/galosh profile.
@@ -451,14 +467,14 @@ profillic_eslx_msafile_Read(ESLX_MSAFILE *afp, ESL_MSA **ret_msa, ProfileType * 
  * Throws:    <eslEMEM> on allocation error.
  *            <eslESYS> if a system call fails, such as fread().
  *            <*ret_msa> is returned <NULL>.
- *            
+ * </pre>            
  */
 template <typename ProfileType>
 static int
 profillic_esl_msafile_profile_Read(ESLX_MSAFILE *afp, ESL_MSA **ret_msa, ProfileType * profile_ptr )
 {
-  // NOTE: Right now this isn't actually using the open file pointer; for convenience I just use the profile.fromFile( <filename> ) method.
-  // TODO: Use convenience fns in esl_buffer.h; see eg hmmer-3.1/easel/esl_msafile_stockholm.c for examples...
+  /// \note Right now this isn't actually using the open file pointer; for convenience I just use the profile.fromFile( <filename> ) method.
+  /// \todo Use convenience fns in esl_buffer.h; see eg hmmer-3.1/easel/esl_msafile_stockholm.c for examples...
   ESL_MSA                 *msa      = NULL;
   //string profile_string;
   char *buf;
@@ -492,8 +508,8 @@ profillic_esl_msafile_profile_Read(ESLX_MSAFILE *afp, ESL_MSA **ret_msa, Profile
   //profile_string = buf;
   //profile_ptr->fromString( profile_string );
   profile_ptr->fromFile( afp->bf->filename,profile_ptr );
-  //if (buf)      free(buf);
-  // TODO: WHY WON'T THIS WORK?  See HACKs in profillic-hmmbuild.cpp to work around it.
+  /// if (buf)      free(buf);
+  /// \todo WHY WON'T THIS WORK?  See HACKs in profillic-hmmbuild.cpp to work around it.
   //fseek( afp->bf->fp, 0, SEEK_END ); // go to the end (to signal there's no more profiles in the file, the next time we come to this function)
 
   // Calculate the consensus sequence.
@@ -519,11 +535,11 @@ profillic_esl_msafile_profile_Read(ESLX_MSAFILE *afp, ESL_MSA **ret_msa, Profile
   seqidx = msa->nseq; // 0
   msa->nseq++; // = 1
   status = esl_strdup(seqname, -1, &(msa->sqname[seqidx]));
-  // NOTE: Could add description of this "sequence" here, using esl_msa_SetSeqDescription(msa, seqidx, desc).
+  /// \todo Could add description of this "sequence" here, using esl_msa_SetSeqDescription(msa, seqidx, desc).
 #ifdef eslAUGMENT_ALPHABET
   if (msa->flags & eslMSA_DIGITAL)
     {
-      // NOTE (profillic): There was a bug in this; it had said .."esl_abc_dsqcat(msa->abc, " where it should have said .."esl_abc_dsqcat(msa->abc->inmap, "
+      /// \note (profillic): There was a bug in this; it had said .."esl_abc_dsqcat(msa->abc, " where it should have said .."esl_abc_dsqcat(msa->abc->inmap, "
       if((status = esl_abc_dsqcat(msa->abc->inmap, &(msa->ax[seqidx]), &(msa->sqlen[seqidx]), tmp_consensus_output_stream.str().c_str(), profile_length)) != eslOK) {
         /* invalid char(s), get informative error message */
         if (esl_abc_ValidateSeq(msa->abc, tmp_consensus_output_stream.str().c_str(), profile_length, afp->errmsg) != eslOK) 
@@ -538,12 +554,12 @@ profillic_esl_msafile_profile_Read(ESLX_MSAFILE *afp, ESL_MSA **ret_msa, Profile
     } 
   msa->alen = profile_length;
 
-  /// .... OR read in a fasta file of sequences too.
-  // TODO: (Optional?) Set msa->name to the name of the profile (file?)
+  // .... OR read in a fasta file of sequences too.
+  /// \todo (Optional?) Set msa->name to the name of the profile (file?)
   esl_strdup(msaname, -1, &(msa->name));
-  // TODO: make sure eslMSA_HASWGTS is FALSE .. OR set it to TRUE and set msa->wgt[idx] to 1.0.
-  // NOTE: Could have secondary structure (per sequence) too. msa->ss[0]. msa->sslen[0] should be the same as msa->sqlen[0].
-  // TODO: Investigate what msa->sa and msa->pp are for.
+  ///  \todo make sure eslMSA_HASWGTS is FALSE .. OR set it to TRUE and set msa->wgt[idx] to 1.0.
+  /// \note Could have secondary structure (per sequence) too. msa->ss[0]. msa->sslen[0] should be the same as msa->sqlen[0].
+  /// \todo Investigate what msa->sa and msa->pp are for.
 
   /* Give the newly parsed MSA a good
    * going-over, and finalize the fields of the MSA data structure.
@@ -566,13 +582,15 @@ profillic_esl_msafile_profile_Read(ESLX_MSAFILE *afp, ESL_MSA **ret_msa, Profile
  * 12.5.1 galosh profile format (from prolific)
  *****************************************************************/
 
-/* Function:  profillic_esl_alignment_profile_Read()
+/**
+ * <pre>
+ * Function:  profillic_esl_alignment_profile_Read()
  * Ted Holzman       tholzman@scharp.org Feb 22, 2012
  * Paul T Edlefsen   paul@galosh.org   February 19, 2012.
  *
- * Synopsis:  Read a profillic/galosh profile.
+ * Synopsis:  Read a prolific/galosh alignment profile.
  *
- * Purpose: Parse the Profile HMM from an open galosh alignment profile format
+ * Purpose:   Parse the Profile HMM from an open galosh alignment profile format
  *            file (from profuse) <afp>, leaving the profile in
  *            <ret_profile>. Also create a new
  *            MSA, and return it by reference through
@@ -600,14 +618,14 @@ profillic_esl_msafile_profile_Read(ESLX_MSAFILE *afp, ESL_MSA **ret_msa, Profile
  * Throws:    <eslEMEM> on allocation error.
  *            <eslESYS> if a system call fails, such as fread().
  *            <*ret_msa> is returned <NULL>.
- *
+ *  </pre>
  */
 template <typename ProfileType>
 static int
 profillic_esl_alignment_profile_Read(ESLX_MSAFILE *afp, ESL_MSA **ret_msa, ProfileType * profile_ptr )
 {
-  // NOTE: Right now this isn't actually using the open file pointer; for convenience I just use the profile.fromFile( <filename> ) method.
-  // TODO: Use convenience fns in esl_buffer.h; see eg hmmer-3.1/easel/esl_msafile_stockholm.c for examples...
+  /// \note Right now this isn't actually using the open file pointer; for convenience I just use the profile.fromFile( <filename> ) method.
+  /// \todo Use convenience fns in esl_buffer.h; see eg hmmer-3.1/easel/esl_msafile_stockholm.c for examples...
   ESL_MSA                 *msa      = NULL;
 //  string profile_string;
   char *buf;
@@ -687,12 +705,12 @@ profillic_esl_alignment_profile_Read(ESLX_MSAFILE *afp, ESL_MSA **ret_msa, Profi
     }
   msa->alen = profile_length;
 
-  /// .... OR read in a fasta file of sequences too.
-  // TODO: (Optional?) Set msa->name to the name of the profile (file?)
+  // .... OR read in a fasta file of sequences too.
+  /// \todo (Optional?) Set msa->name to the name of the profile (file?)
   esl_strdup(msaname, -1, &(msa->name));
-  // TODO: make sure eslMSA_HASWGTS is FALSE .. OR set it to TRUE and set msa->wgt[idx] to 1.0.
-  // NOTE: Could have secondary structure (per sequence) too. msa->ss[0]. msa->sslen[0] should be the same as msa->sqlen[0].
-  // TODO: Investigate what msa->sa and msa->pp are for.
+  /// \todo make sure eslMSA_HASWGTS is FALSE .. OR set it to TRUE and set msa->wgt[idx] to 1.0.
+  /// \note Could have secondary structure (per sequence) too. msa->ss[0]. msa->sslen[0] should be the same as msa->sqlen[0].
+  /// \todo Investigate what msa->sa and msa->pp are for.
 
   /* Give the newly parsed MSA a good
    * going-over, and finalize the fields of the MSA data structure.
@@ -715,6 +733,7 @@ profillic_esl_alignment_profile_Read(ESLX_MSAFILE *afp, ESL_MSA **ret_msa, Profi
 
 
 /*****************************************************************
+ * \par License:
  * @LICENSE@
  *
  * SVN $URL$
