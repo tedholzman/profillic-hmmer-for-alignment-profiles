@@ -1,12 +1,14 @@
 /**
  * \file profillic-hmmtoprofile.cpp
- * hmmstat: display summary statistics for an HMM database.
- * 
+ * \brief hmmstat: display summary statistics for an HMM database.
+ * \details
+ * <pre>
  * Example:
  *  ./hmmstat Pfam
  *  
  * SRE, Thu May 24 11:18:20 2007
  * SVN $Id: hmmstat.c 3474 2011-01-17 13:25:32Z eddys $
+ * </pre>
  */
 extern "C" {
 #include "p7_config.h"
@@ -24,25 +26,27 @@ extern "C" {
 #include "hmmer.h"
 }
 
-/////////////// For profillic-hmmer //////////////////////////////////
+/* ////////////// For profillic-hmmer ////////////////////////////////// */
 #include "profillic-hmmer.hpp"
 
 #include <iostream>
 
-/// Updated notices:
+// Updated notices:
 #define PROFILLIC_HMMER_VERSION "1.0a"
 #define PROFILLIC_HMMER_DATE "July 2011"
 #define PROFILLIC_HMMER_COPYRIGHT "Copyright (C) 2011 Paul T. Edlefsen, Fred Hutchinson Cancer Research Center."
 #define PROFILLIC_HMMER_URL "http://galosh.org/"
 
-/// Modified from hmmer.c p7_banner(..):
+// Modified from hmmer.c p7_banner(..):
 /* Version info - set once for whole package in configure.ac
  */
 /*****************************************************************
  * 1. Miscellaneous functions for H3
  *****************************************************************/
 
-/* Function:  p7_banner()
+/**
+ * <pre>
+ * Function:  p7_banner()
  * Synopsis:  print standard HMMER application output header
  * Incept:    SRE, Wed May 23 10:45:53 2007 [Janelia]
  *
@@ -80,6 +84,7 @@ extern "C" {
  *    HMMER_LICENSE   "Freely licensed under the Janelia Software License."
  *
  * Returns:   (void)
+ * </pre>
  */
 void
 profillic_p7_banner(FILE *fp, char *progname, char *banner)
@@ -118,16 +123,16 @@ convert_to_galosh_profile ( P7_HMM * hmm, ProfileType & profile )
 
   profile.zero();
 
-  // NOTE that HMMER3 has a slightly different model, starting in
-  // Begin rather than in preAlign, and with 3 legal transitions out
-  // of Begin (one of these is to PreAlign).  The galosh profile model
-  // begins in preAlign and transitions to Begin, and from there to
-  // either Match or Delete.  One implication is that galosh profiles
-  // enforce t[ 0 ][ p7H_MI ] to be the same as t[ 0 ][ p7H_II ], but
-  // HMMER3 does not.  Another way to say this is that H3 uses affine
-  // pre-aligns, and prohibits pre-align -to- delete transitions,
-  // whereas galosh / profillic uses non-affine pre-aligns and allows
-  // pre-align->delete.
+  /// \note NOTE that HMMER3 has a slightly different model, starting in
+  /// Begin rather than in preAlign, and with 3 legal transitions out
+  /// of Begin (one of these is to PreAlign).  The galosh profile model
+  /// begins in preAlign and transitions to Begin, and from there to
+  /// either Match or Delete.  One implication is that galosh profiles
+  /// enforce t[ 0 ][ p7H_MI ] to be the same as t[ 0 ][ p7H_II ], but
+  /// HMMER3 does not.  Another way to say this is that H3 uses affine
+  /// pre-aligns, and prohibits pre-align -to- delete transitions,
+  /// whereas galosh / profillic uses non-affine pre-aligns and allows
+  /// pre-align->delete.
 
   // fromPreAlign
   profile[ galosh::Transition::fromPreAlign ][ galosh::TransitionFromPreAlign::toPreAlign ] =
@@ -203,7 +208,7 @@ convert_to_galosh_profile ( P7_HMM * hmm, ProfileType & profile )
   return status;
 } // convert_to_galosh_profile (..)
 
-/////////////// End profillic-hmmer //////////////////////////////////
+/* ////////////// End profillic-hmmer ////////////////////////////////// */
 
 static ESL_OPTIONS options[] = {
   /* name           type      default  env  range     toggles   reqs   incomp  help   docgroup*/
@@ -213,11 +218,15 @@ static ESL_OPTIONS options[] = {
 
 static char usage[]  = "[-options] <input hmmfile> <output galosh profile>";
 static char banner[] = "convert HMM to galosh profile";
-
+/**
+ * \fn int main(int argc,char **argv)
+ * main driver
+ *
+ */
 int
 main(int argc, char **argv)
 {
-  ESL_GETOPTS     *go	   = NULL;      /* command line processing                   */
+  ESL_GETOPTS     *go	   = NULL;      /**< command line processing                   */
   ESL_ALPHABET    *abc     = NULL;
   char            *hmmfile = NULL;
   char            *outhmmfile = NULL;
@@ -284,7 +293,7 @@ main(int argc, char **argv)
   else if (status == eslEFORMAT)   p7_Fail("File format problem in trying to open HMM file %s.\n%s\n",                hmmfile, errbuf);
   else if (status != eslOK)        p7_Fail("Unexpected error %d in opening HMM file %s.\n%s\n",               status, hmmfile, errbuf);  
 
-  /* Main body: read HMMs one at a time, print one line of stats
+  /** Main body: read HMMs one at a time, print one line of stats
    */
   printf("#\n");
   printf("# %-4s %-20s %-12s %8s %8s %6s %6s %6s %6s %6s\n", "idx",  "name",                 "accession",    "nseq",     "eff_nseq", "M",      "relent", "info",   "p relE", "compKL");

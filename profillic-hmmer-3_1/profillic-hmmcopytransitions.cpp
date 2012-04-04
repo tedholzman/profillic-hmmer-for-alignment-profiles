@@ -1,12 +1,14 @@
 /**
  * \file profillic-hmmcopytransitions.cpp
- * hmmstat: display summary statistics for an HMM database.
- * 
+ * \brief hmmstat: display summary statistics for an HMM database.
+ * \details
+ * <pre>
  * Example:
  *  ./hmmstat Pfam
  *  
  * SRE, Thu May 24 11:18:20 2007
  * SVN $Id: hmmstat.c 3474 2011-01-17 13:25:32Z eddys $
+ * </pre>
  */
 extern "C" {
 #include "p7_config.h"
@@ -25,24 +27,26 @@ extern "C" {
 #include "hmmer.h"
 }
 
-/////////////// For profillic-hmmer //////////////////////////////////
+/* ////////////// For profillic-hmmer ////////////////////////////////// */
 #include "profillic-hmmer.hpp"
 //#include "profillic-p7_builder.hpp"
 
-/// Updated notices:
+// Updated notices:
 #define PROFILLIC_HMMER_VERSION "1.0a"
 #define PROFILLIC_HMMER_DATE "July 2011"
 #define PROFILLIC_HMMER_COPYRIGHT "Copyright (C) 2011 Paul T. Edlefsen, Fred Hutchinson Cancer Research Center."
 #define PROFILLIC_HMMER_URL "http://galosh.org/"
 
-/// Modified from hmmer.c p7_banner(..):
+// Modified from hmmer.c p7_banner(..):
 /* Version info - set once for whole package in configure.ac
  */
 /*****************************************************************
  * 1. Miscellaneous functions for H3
  *****************************************************************/
 
-/* Function:  p7_banner()
+/**
+ * <pre>  
+ * Function:  p7_banner()
  * Synopsis:  print standard HMMER application output header
  * Incept:    SRE, Wed May 23 10:45:53 2007 [Janelia]
  *
@@ -80,6 +84,7 @@ extern "C" {
  *    HMMER_LICENSE   "Freely licensed under the Janelia Software License."
  *
  * Returns:   (void)
+ * </pre>
  */
 void
 profillic_p7_banner(FILE *fp, char *progname, char *banner)
@@ -99,7 +104,7 @@ profillic_p7_banner(FILE *fp, char *progname, char *banner)
   if (appname != NULL) free(appname);
   return;
 }
-/////////////// End profillic-hmmer //////////////////////////////////
+/* ////////////// End profillic-hmmer ////////////////////////////////// */
 
 static ESL_OPTIONS options[] = {
   /* name           type      default  env  range     toggles   reqs   incomp  help   docgroup*/
@@ -109,7 +114,10 @@ static ESL_OPTIONS options[] = {
 
 static char usage[]  = "[-options] <input hmmfile for emissions> <input hmmfile for transitions> <output hmmfile>";
 static char banner[] = "create a hybrid of two HMMs with emissions from one, averaged transitions from the other";
-
+/**
+ * int main(int argc, char **argv)
+ * main driver
+ */
 int
 main(int argc, char **argv)
 {
