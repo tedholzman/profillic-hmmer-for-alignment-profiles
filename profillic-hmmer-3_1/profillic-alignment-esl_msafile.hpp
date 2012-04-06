@@ -1,7 +1,7 @@
 /**
  * \file profillic-alignment-esl_msafile.hpp
  * \brief
- * Multiple sequence alignment file i/o 
+ * Multiple sequence alignment file i/o (for galosh alignment profiles)
  * \details
  * <pre>
  * Table of contents:
@@ -69,7 +69,7 @@ profillic_esl_msafile_profile_Read(ESLX_MSAFILE *afp, ESL_MSA **ret_msa, Profile
  *****************************************************************/
 
 static int profillic_msafile_Create    (ESLX_MSAFILE **ret_afp);
-static int profillic_msafile_OpenBuffer(ESL_ALPHABET **byp_abc, ESL_BUFFER *bf, int format, ESLX_MSAFILE_FMTDATA *fmtd, ESLX_MSAFILE *afp)
+static int profillic_msafile_OpenBuffer(ESL_ALPHABET **byp_abc, ESL_BUFFER *bf, int format, ESLX_MSAFILE_FMTDATA *fmtd, ESLX_MSAFILE *afp);
 /**
  * <pre>
  *

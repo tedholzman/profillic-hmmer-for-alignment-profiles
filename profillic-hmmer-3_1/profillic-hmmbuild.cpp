@@ -2,6 +2,82 @@
  * \file profillic-hmmbuild.cpp
  * \brief
  * Profile HMM construction from a multiple sequence alignment or profillic profile
+ * \details
+<pre>
+# profillic-hmmbuild :: profile HMM construction from multiple sequence alignments and galosh profiles
+# profillic-hmmer 1.0a (July 2011); http://galosh.org/
+# Copyright (C) 2011 Paul T. Edlefsen, Fred Hutchinson Cancer Research Center.
+# HMMER 3.1dev (November 2011); http://hmmer.org/
+# Copyright (C) 2011 Howard Hughes Medical Institute.
+# Freely distributed under the GNU General Public License (GPLv3).
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Usage: profillic-hmmbuild [-options] <hmmfile_out> <msafile>
+
+Basic options:
+  -h     : show brief help on version and usage
+  -n <s> : name the HMM <s>
+  -o <f> : direct summary output to file <f>, not stdout
+  -O <f> : resave annotated, possibly modified MSA to file <f>
+
+Options for selecting alphabet rather than guessing it:
+  --amino : input alignment is protein sequence data
+  --dna   : input alignment is DNA sequence data
+  --rna   : input alignment is RNA sequence data
+
+Alternative model construction strategies:
+  --fast            : assign cols w/ >= symfrac residues as consensus  [default]
+  --hand            : manual construction (requires reference annotation)
+  --profillic-amino : input msa is actually an AA galosh profile (from profillic)
+  --profillic-dna   : input msa is actually a DNA galosh profile (from profillic)
+  --symfrac <x>     : sets sym fraction controlling --fast construction  [0.5]
+  --fragthresh <x>  : if L <= x*alen, tag sequence as a fragment  [0.5]
+
+Alternative relative sequence weighting strategies:
+  --wpb     : Henikoff position-based weights  [default]
+  --wgsc    : Gerstein/Sonnhammer/Chothia tree weights
+  --wblosum : Henikoff simple filter weights
+  --wnone   : don't do any relative weighting; set all to 1
+  --wgiven  : use weights as given in MSA file
+  --wid <x> : for --wblosum: set identity cutoff  [0.62]  (0<=x<=1)
+
+Alternative effective sequence weighting strategies:
+  --eent       : adjust eff seq # to achieve relative entropy target  [default]
+  --eclust     : eff seq # is # of single linkage clusters
+  --enone      : no effective seq # weighting: just use nseq
+  --eset <x>   : set eff seq # for all models to <x>
+  --ere <x>    : for --eent: set minimum rel entropy/position to <x>
+  --esigma <x> : for --eent: set sigma param to <x>  [45.0]
+  --eid <x>    : for --eclust: set fractional identity cutoff to <x>  [0.62]
+
+Alternative prior strategies:
+  --pnone    : don't use any prior; parameters are frequencies
+  --plaplace : use a Laplace +1 prior
+
+Handling single sequence inputs:
+  --single      : use substitution score matrix for single-sequence protein inputs
+  --popen <x>   : gap open probability (with --single)
+  --pextend <x> : gap extend probability (with --single)
+  --mx <s>      : substitution score matrix (built-in matrices, with --single)
+  --mxfile <f>  : read substitution score matrix from file <f> (with --single)
+
+Control of E-value calibration:
+  --EmL <n> : length of sequences for MSV Gumbel mu fit  [200]  (n>0)
+  --EmN <n> : number of sequences for MSV Gumbel mu fit  [200]  (n>0)
+  --EvL <n> : length of sequences for Viterbi Gumbel mu fit  [200]  (n>0)
+  --EvN <n> : number of sequences for Viterbi Gumbel mu fit  [200]  (n>0)
+  --EfL <n> : length of sequences for Forward exp tail tau fit  [100]  (n>0)
+  --EfN <n> : number of sequences for Forward exp tail tau fit  [200]  (n>0)
+  --Eft <x> : tail mass for Forward exponential tail tau fit  [0.04]  (0<x<1)
+
+Other options:
+  --cpu <n>      : number of parallel CPU workers for multithreads
+  --stall        : arrest after start: for attaching debugger to process
+  --informat <s> : assert input alifile is in format <s> (no autodetect)
+  --seed <n>     : set RNG seed to <n> (if 0: one-time arbitrary seed)  [42]
+  --w_beta <x>   : tail mass at which window length is determined
+  --w_length <n> : window length 
+  --noprior      : do not apply any priors
+ </pre>
  */
 extern "C" {
 #include "p7_config.h"

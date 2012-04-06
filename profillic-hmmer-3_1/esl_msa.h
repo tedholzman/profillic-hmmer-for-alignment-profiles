@@ -1,5 +1,6 @@
 /**
  * \file esl_msa.h
+ * \brief Definitions for easel multiple sequences alignments (ESL_MSA)
  */
 
 /* Multiple sequence alignments 
@@ -26,7 +27,7 @@
 #define eslMSA_NCUTS   6
 /*::cexcerpt::msa_cutoffs::end::*/
 
-/* Object: ESL_MSA
+/** Object: ESL_MSA
  * 
  * A multiple sequence alignment.
  */

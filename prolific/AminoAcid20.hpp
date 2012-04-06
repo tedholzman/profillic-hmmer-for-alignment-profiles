@@ -1,19 +1,12 @@
 /**
  * \file AminoAcid20.hpp
  * \author D'Oleris Paul Thatcher Edlefsen   paul@galosh.org
- *---------------------------------------------------------------------------##
- *  Library:
+ * \par Library:
  *      galosh::prolific
- *  File:
- *      AminoAcid20.hpp
- *  Author:
- *      D'Oleris Paul Thatcher Edlefsen   paul@galosh.org
- *  Description:
+ * \brief
  *      A 20-char alternative to seqan::AminoAcid (which includes a 21st char for
  *      the stop codon).
- *
- ******************************************************************************
- *
+ * \par Overview:
  *    This file is part of prolific, a library of useful C++ classes for
  *    working with genomic sequence data and Profile HMMs.  Please see the
  *    document CITING, which should have been included with this file.  You may
@@ -21,9 +14,9 @@
  *    relevant papers* in your documentation and publications associated with
  *    uses of this library.  Thank you!
  *
- *    Copyright (C) 2011 by Paul T. Edlefsen, Fred Hutchinson Cancer
+ * \copyright &copy; 2011 by Paul T. Edlefsen, Fred Hutchinson Cancer
  *    Research Center.
- *
+ * \par License: 
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
  *    You may obtain a copy of the License at

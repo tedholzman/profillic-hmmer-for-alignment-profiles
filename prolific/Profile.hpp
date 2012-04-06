@@ -1,16 +1,11 @@
 /**
  * \file Profile.hpp
  * \author  D'Oleris Paul Thatcher Edlefsen   paul@galosh.org
+ * \par Library:
+ * \brief
+ *      Class definition for the Galosh Profile HMM class.  
  *
- * ---------------------------------------------------------------------------##
- *  Library:
- *      galosh::prolific
- *  File:
- *      Profile.hpp
- *  Author:
- *      D'Oleris Paul Thatcher Edlefsen   paul@galosh.org
- *  Description:
- *      Class definition for the Galosh Profile HMM class.  A Profile is a data
+ *      A Profile is a data
  *      structure for the model parameters.  Conceptually, for every position
  *      of the profile there are a bunch of parameters for each kind of Plan 7
  *      profile transition/emission.  We make this a vector of maps from
@@ -22,9 +17,7 @@
  *      More about Plan7 can be found at
  *      http://www.csb.yale.edu/userguides/seq/hmmer/docs/node11.html
  *      (or any other HMMER docs mirror, node 11)
- *
- ******************************************************************************
- *
+ * \par Overview:
  *    This file is part of prolific, a library of useful C++ classes for
  *    working with genomic sequence data and Profile HMMs.  Please see the
  *    document CITING, which should have been included with this file.  You may
@@ -32,9 +25,9 @@
  *    relevant papers* in your documentation and publications associated with
  *    uses of this library.  Thank you!
  *
- *    Copyright (C) 2008, 2011 by Paul T. Edlefsen, Fred Hutchinson Cancer
+ * \copyright &copy; 2008, 2011 by Paul T. Edlefsen, Fred Hutchinson Cancer
  *    Research Center.
- *
+ * \par License:
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
  *    You may obtain a copy of the License at

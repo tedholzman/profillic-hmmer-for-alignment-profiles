@@ -1,7 +1,7 @@
 /**
  * \file profillic-esl_msafile.hpp
  * \brief
- * Multiple sequence alignment file i/o
+ * Multiple sequence alignment file i/o (for profillic profiles)
  * \details
  * <pre>
  * Table of contents:

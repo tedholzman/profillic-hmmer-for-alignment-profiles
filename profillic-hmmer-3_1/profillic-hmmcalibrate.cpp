@@ -1,13 +1,20 @@
 /**
  * \file profillic-hmmcalibrate.cpp
- * \brief hmmstat: display summary statistics for an HMM database.
+ * \brief Calibrate HMM search statistics 
  * \details
  * <pre>
- * Example:
- *  ./hmmstat Pfam
- *  
- * SRE, Thu May 24 11:18:20 2007
- * SVN $Id: hmmstat.c 3474 2011-01-17 13:25:32Z eddys $
+# profillic-hmmcalibrate :: calibrate HMM search statistics
+# profillic-hmmer 1.0a (July 2011); http://galosh.org/
+# Copyright (C) 2011 Paul T. Edlefsen, Fred Hutchinson Cancer Research Center.
+# HMMER 3.1dev (November 2011); http://hmmer.org/
+# Copyright (C) 2011 Howard Hughes Medical Institute.
+# Freely distributed under the GNU General Public License (GPLv3).
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Usage: profillic-hmmcalibrate [-options] <input hmmfile> <output hmmfile>
+
+Options:
+  -h         : show brief help on version and usage
+  --seed <n> : set RNG seed to <n> (if 0: one-time arbitrary seed)  [42]  (n>=0)
  * </pre>
  */
 extern "C" {

@@ -3,13 +3,10 @@
  * \author D'Oleris Paul Thatcher Edlefsen   paul@galosh.org
  *  \par Library:
  *      galosh::prolific
- *  \par File:
- *      ProlificParameters.hpp
  *  \brief
  * The galosh::Parameters descendant for programs using the
- * prolific library (inherits from
- * galosh::DynamicProgramming::Parameters).  Adds parameters relating to
- * priors and initial values for Profile HMMs.
+ * prolific library (inherits from galosh::DynamicProgramming::Parameters).  
+ * Adds parameters relating to priors and initial values for Profile HMMs.
  *
  * \par Overview:
  *    This file is part of prolific, a library of useful C++ classes for
@@ -81,10 +78,14 @@ template <class ResidueType,
         ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP( dynamic_programming_parameters_t );
 
         ar & BOOST_SERIALIZATION_NVP( useDeletionsForInsertionsParameters );
-        ar & BOOST_SERIALIZATION_NVP( expectedDeletionsCounts );
-        ar & BOOST_SERIALIZATION_NVP( expectedInsertionsCounts );
-        ar & BOOST_SERIALIZATION_NVP( expectedDeletionLengthAsProfileLengthFractions );
-        ar & BOOST_SERIALIZATION_NVP( expectedInsertionLengthAsProfileLengthFractions );
+//        ar & BOOST_SERIALIZATION_NVP( expectedDeletionsCounts );   /// TAH 4/2012 macro has problems with pointer types
+        ar & boost::serialization::make_nvp<vector<double> >("expectedDeletionsCounts",expectedDeletionsCounts);
+//        ar & BOOST_SERIALIZATION_NVP( expectedInsertionsCounts );
+        ar & boost::serialization::make_nvp<vector<double> >("expectedInsertionsCounts",expectedInsertionsCounts);
+//        ar & BOOST_SERIALIZATION_NVP( expectedDeletionLengthAsProfileLengthFractions );
+        ar & boost::serialization::make_nvp<vector<double> >("expectedDeletionLengthAsProfileLengthFractions",expectedDeletionLengthAsProfileLengthFractions);
+//        ar & BOOST_SERIALIZATION_NVP( expectedInsertionLengthAsProfileLengthFractions );
+        ar & boost::serialization::make_nvp<vector<double> >("expectedInsertionLengthAsProfileLengthFractions",expectedInsertionLengthAsProfileLengthFractions);
         ar & BOOST_SERIALIZATION_NVP( minExpectedDeletionLength );
         ar & BOOST_SERIALIZATION_NVP( minExpectedInsertionLength );
         ar & BOOST_SERIALIZATION_NVP( preAlignInsertion );
@@ -925,7 +926,7 @@ template <class ResidueType,
           os << "expectedDeletionsCounts = NULL" << endl;
               } else {
           os << "expectedDeletionsCounts = { ";
-          for( uint32_t cr_i = 0; cr_i < expectedDeletionsCounts->size(); cr_i++ ) {
+          for( uint32_t cr_i = 0; cr_i < ((std::vector *)expectedDeletionsCounts)->size(); cr_i++ ) {
             if( cr_i > 0 ) {
               os << ", ";
             }
@@ -938,7 +939,7 @@ template <class ResidueType,
           os << "expectedInsertionsCounts = NULL" << endl;
               } else {
           os << "expectedInsertionsCounts = { ";
-          for( uint32_t cr_i = 0; cr_i < expectedInsertionsCounts->size(); cr_i++ ) {
+          for( uint32_t cr_i = 0; cr_i < ((std::vector *)expectedInsertionsCounts)->size(); cr_i++ ) {
             if( cr_i > 0 ) {
               os << ", ";
             }
@@ -951,7 +952,7 @@ template <class ResidueType,
           os << "expectedDeletionLengthAsProfileLengthFractions = NULL" << endl;
               } else {
           os << "expectedDeletionLengthAsProfileLengthFractions = { ";
-          for( uint32_t cr_i = 0; cr_i < expectedDeletionLengthAsProfileLengthFractions->size(); cr_i++ ) {
+          for( uint32_t cr_i = 0; cr_i < ((std::vector *)expectedDeletionLengthAsProfileLengthFractions)->size(); cr_i++ ) {
             if( cr_i > 0 ) {
               os << ", ";
             }
@@ -964,7 +965,7 @@ template <class ResidueType,
           os << "expectedInsertionLengthAsProfileLengthFractions = NULL" << endl;
               } else {
           os << "expectedInsertionLengthAsProfileLengthFractions = { ";
-          for( uint32_t cr_i = 0; cr_i < expectedInsertionLengthAsProfileLengthFractions->size(); cr_i++ ) {
+          for( uint32_t cr_i = 0; cr_i < ((std::vector *)expectedInsertionLengthAsProfileLengthFractions)->size(); cr_i++ ) {
             if( cr_i > 0 ) {
               os << ", ";
             }

@@ -2,36 +2,22 @@
  * \file DynamicProgramming.hpp
  * \author D'Oleris Paul Thatcher Edlefsen   paul@galosh.org with some additions
  * by Ted Holzman
+ * \par Library:
+ * galosh::prolific
+ * \brief Class definition(s) for the Galosh DynamicProgramming class.  This is a
+ *  super (duper) class with many subclasses and static member functions
+ *  for doing useful things.
+ * \par Overview:
+ *    This file is part of prolific, a library of useful C++ classes for
+ *    working with genomic sequence data and Profile HMMs.  Please see the
+ *    document CITING, which should have been included with this file.  You may
+ *    use at will, subject to the license (Apache v2.0), but *please cite the
+ *    relevant papers* in your documentation and publications associated with
+ *    uses of this library.  Thank you!
  *
- *
- *  Class definition(s) for the Galosh DynamicProgramming class.  This is a
- *     super (duper) class with many subclasses and static member functions
- *      for doing useful things.
- */
-/*---------------------------------------------------------------------------##
-##  Library:
-##      galosh::prolific
-##  File:
-##      DynamicProgramming.hpp
-##  Author:
-##      D'Oleris Paul Thatcher Edlefsen   paul@galosh.org
-##  Description:
-##      Class definition for the Galosh DynamicProgramming class.  This is a
-##      super (duper) class with many subclasses and static member functions
-##      for doing useful things.
-##
-#******************************************************************************
-#*
-#*    This file is part of prolific, a library of useful C++ classes for
-#*    working with genomic sequence data and Profile HMMs.  Please see the
-#*    document CITING, which should have been included with this file.  You may
-#*    use at will, subject to the license (Apache v2.0), but *please cite the
-#*    relevant papers* in your documentation and publications associated with
-#*    uses of this library.  Thank you!
-#*
-#*    Copyright (C) 2008, 2011 by Paul T. Edlefsen, Fred Hutchinson Cancer
-#*    Research Center.
-#*
+ * \copyright &copy; 2008, 2011 by Paul T. Edlefsen, Fred Hutchinson Cancer
+ *    Research Center.
+ * \par License:
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
  *    You may obtain a copy of the License at
@@ -43,7 +29,7 @@
  *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
-#*****************************************************************************/
+ *****************************************************************************/
 
 #if     _MSC_VER > 1000
 #pragma once
@@ -5028,7 +5014,7 @@ static dynamicprogramming_DeletionOut_subcell_tag const DeletionOut =
       {
         uint32_t last_pos = distances.size() - 1;
         uint32_t pos_i;
-        uint32_t last_seq = (distances[ 0 ]).std::vector<SequencePositionEntenteDistances>::size() - 1;
+        uint32_t last_seq = distances[ 0 ].size() - 1;
         uint32_t seq_i;
         for( seq_i = 0; seq_i <= last_seq ; seq_i++ ) {
           os << "From Sequence " << seq_i << ":" << endl;
@@ -23679,9 +23665,9 @@ static dynamicprogramming_DeletionOut_subcell_tag const DeletionOut =
             typename MatrixValueType>
     class
     AlignmentProfileAccessor :
-    	   public DynamicProgramming<ResidueType,ProbabilityType,ScoreType,MatrixValueType>::AlignmentProfile
-    	{
-    	   public:
+       public DynamicProgramming<ResidueType,ProbabilityType,ScoreType,MatrixValueType>::AlignmentProfile
+    {
+       public:
           typedef ResidueType APAResidueType;
           /**
            * Stream reader/parsing routines
@@ -23691,21 +23677,20 @@ static dynamicprogramming_DeletionOut_subcell_tag const DeletionOut =
            */
            friend std::istream &
            operator>> (
-                   std::istream & is,
-                   AlignmentProfileAccessor<ResidueType, ProbabilityType, ScoreType, MatrixValueType> & prof
+              std::istream & is,
+              AlignmentProfileAccessor<ResidueType, ProbabilityType, ScoreType, MatrixValueType> & prof
            )
            {
-        	      /**
-        	       * Don't even begin if the input stream is at EOF or in a failed state.
-        	       * Otherwise, clear the current vector and iterate through the stream.  Each
-        	       * line is an <AlignmentProfilePosition> in square brackets.  It consists of
-        	       * MatchEmissionParameters followed by GlobalParameters
-        	       *
-        	       */
-        	      assert( !is.fail() && !is.eof());
-        	      prof.clear();
-        	      int lcount = 0;  //debug
-              while( !is.eof()) {
+           /**
+            * Don't even begin if the input stream is at EOF or in a failed state.
+            * Otherwise, clear the current vector and iterate through the stream.  Each
+            * line is an <AlignmentProfilePosition> in square brackets.  It consists of
+            * MatchEmissionParameters followed by GlobalParameters
+            */
+               assert( !is.fail() && !is.eof());
+               prof.clear();
+               int lcount = 0;  //debug
+               while( !is.eof()) {
             	  typename DynamicProgramming<ResidueType,ProbabilityType,ScoreType,MatrixValueType>::AlignmentProfilePosition curPosition;
             	      //is >> "[ ";
                   assert(is.get() == '[');
@@ -23734,7 +23719,7 @@ static dynamicprogramming_DeletionOut_subcell_tag const DeletionOut =
                   is.ignore( 100000, '\n' );
               }
               //std::cerr << "Read " << ++lcount << " alignment profile lines.\n"; std::cerr.flush();
-///TAH 3/12  debug routine:
+///TAH 3/12  debug code:
 /**
  * having read in and created an AlignmentProfile, is it the same when we
  * output it again
@@ -23747,24 +23732,25 @@ testout.close();
               return is;
            }; // operator>>(std::istream,alignmentprofile)
 
-    	       bool
-    	       fromFile (
-    	    		   std::istream & is,
-               AlignmentProfileAccessor<ResidueType, ProbabilityType, ScoreType, MatrixValueType> & prof
-           ) {
-        	      is >> prof;
-        	      return true;
+    	   bool
+           fromFile (
+    	      std::istream & is,
+              AlignmentProfileAccessor<ResidueType, ProbabilityType, ScoreType, MatrixValueType> & prof
+           ) 
+           {
+              is >> prof;
+              return true;
            }  // fromFile(stream, AlignmentProfile) wrapper around >>
 
            bool
            fromFile (
-        	      char *fn,
+              char *fn,
               AlignmentProfileAccessor<ResidueType, ProbabilityType, ScoreType, MatrixValueType> & prof
            )
            {
-        	      std::ifstream is(fn);
-    	          return fromFile(is,prof);
-    	       } // fromFile(stream, AlignmentProfile) wrapper around >>
+              std::ifstream is(fn);
+    	      return fromFile(is,prof);
+    	   } // fromFile(stream, AlignmentProfile) wrapper around >>
 
            /// \todo check that the latter two functions work when they're
            /// actually compiled.
@@ -23772,16 +23758,16 @@ testout.close();
            bool
            fromFile (const char *fn)
            {
-        	      return fromFile(fn,this);
+              return fromFile(fn,this);
            } // fromFile(char *) Read this AlignmentProfile
 
            bool
            fromFile (std::istream & is) {
-        	      return fromFile(is,this);
+              return fromFile(is,this);
            } // fromFile(std::istream) Read this AlignmentProfile
 
 
-    	   }; // AlignmentProfileAccessor
+    }; // AlignmentProfileAccessor
 
 } // End namespace galosh
 

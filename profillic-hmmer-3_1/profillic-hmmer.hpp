@@ -1,8 +1,8 @@
 /**
  * \file profillic-hmmer.hpp
- * \brief Stuff we needed to modify in order to compile it in c++
+ * \brief Minor modifications necessary to compile profillic mods in c++
  * \details
- * I had to change hmmer3/easel/esl_msa.h, where keyword "new" was being used as an 
+ * Had to change hmmer3/easel/esl_msa.h, where keyword "new" was being used as an 
  * argument name in a predeclaration for esl_msa_Copy (..).  It now reads:
  * \code
  * extern int      esl_msa_Copy (const ESL_MSA *msa, ESL_MSA *_new);

@@ -1,30 +1,22 @@
 /**
  * \file Sequence.hpp
  * \author D'Oleris Paul Thatcher Edlefsen   paul@galosh.org
- *
- * --------------------------------------------------------------------------##
- *  Library:
+ * \par Library:
  *      galosh::prolific
- *  File:
- *      Sequence.hpp
- *  Author:
- *      D'Oleris Paul Thatcher Edlefsen   paul@galosh.org
- *  Description:
+ * \brief
  *      Class definition for the Galosh Sequence class, presently implemented
  *      using seqan::string.
- *
- ******************************************************************************
- *
+ * \par Overview:
  *    This file is part of prolific, a library of useful C++ classes for
  *    working with genomic sequence data and Profile HMMs.  Please see the
  *    document CITING, which should have been included with this file.  You may
  *    use at will, subject to the license (Apache v2.0), but *please cite the
  *    relevant papers* in your documentation and publications associated with
  *    uses of this library.  Thank you!
- * 
- *    Copyright (C) 2008, 2011 by Paul T. Edlefsen, Fred Hutchinson Cancer
+ * \copyright
+ *    Copyright &copy; 2008, 2011 by Paul T. Edlefsen, Fred Hutchinson Cancer
  *    Research Center.
- *
+ * \par License:
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
  *    You may obtain a copy of the License at

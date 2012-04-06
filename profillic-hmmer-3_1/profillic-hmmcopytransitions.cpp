@@ -1,13 +1,20 @@
 /**
  * \file profillic-hmmcopytransitions.cpp
- * \brief hmmstat: display summary statistics for an HMM database.
+ * \brief 
+ * create a hybrid of two HMMs with emissions from one, averaged transitions from the other
  * \details
  * <pre>
- * Example:
- *  ./hmmstat Pfam
- *  
- * SRE, Thu May 24 11:18:20 2007
- * SVN $Id: hmmstat.c 3474 2011-01-17 13:25:32Z eddys $
+# profillic-hmmcopytransitions :: create a hybrid of two HMMs with emissions from one, averaged transitions from the other
+# profillic-hmmer 1.0a (July 2011); http://galosh.org/
+# Copyright (C) 2011 Paul T. Edlefsen, Fred Hutchinson Cancer Research Center.
+# HMMER 3.1dev (November 2011); http://hmmer.org/
+# Copyright (C) 2011 Howard Hughes Medical Institute.
+# Freely distributed under the GNU General Public License (GPLv3).
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Usage: profillic-hmmcopytransitions [-options] <input hmmfile for emissions> <input hmmfile for transitions> <output hmmfile>
+
+Options:
+  -h : show brief help on version and usage
  * </pre>
  */
 extern "C" {
