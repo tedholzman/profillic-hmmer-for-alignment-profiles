@@ -93,8 +93,9 @@ using std::copy;
 #include <string>
 #include <iostream>
 #include <sstream>
-#include <limits> // for numeric_limits<double>
+//#include <limits> // for numeric_limits<double>
                   /// TAH 3/12 for converting between FILE* and istream
+#include <map>
 #include <boost/iostreams/device/file_descriptor.hpp>
 #include <boost/iostreams/stream.hpp>
 #include <cstdio>
@@ -103,6 +104,15 @@ using std::copy;
 #include <boost/serialization/utility.hpp>
 #include <boost/serialization/vector.hpp>
 #include <boost/serialization/version.hpp>
+
+/**
+ * For scanning and parsing alignment profiles.  \see AlignmentProfileAccessor
+ */
+#include "ProlificIOHelpers.hpp"
+#include <boost/iostreams/device/file.hpp>
+#include <boost/iostreams/filtering_stream.hpp>
+#include <boost/xpressive/xpressive.hpp>
+#include <boost/xpressive/regex_actions.hpp>
 
 // For conversion between muscle's MSA class and our MultipleAlignment class
 #ifdef __HAVE_MUSCLE
@@ -694,7 +704,7 @@ static dynamicprogramming_DeletionOut_subcell_tag const DeletionOut =
        * This can be used to calculate the (self-)entropy by calling
        * this->crossEntropy( *this ).  It can also be used to calculate the KL
        * divergence by taking the difference of the cross-entropy and the
-       * self-entropy, or the symmeterized KL divergence by summing the KL
+       * self-entropy, or the symmetrized KL divergence by summing the KL
        * divergences computed both ways.
        *
        * See also the other crossEntropy method, which accepts a weights argument.
@@ -982,7 +992,7 @@ static dynamicprogramming_DeletionOut_subcell_tag const DeletionOut =
        * probabilities.  Note that these are (usually) not conditioned on there
        * being a Match at all (that is, the probs don't sum to 1; instead they
        * sum to 1-P(Deletion)).  If the include_nonemission_prob argument is
-       * true, the probability of a cooccurring deletion will be included in the
+       * true, the probability of a co-occurring deletion will be included in the
        * calculation. Note also that this is symmetric, so calling
        * the other position's calculateMatchEmissionCooccurrenceProbability
        * with this pos as an argument will return the same thing.
@@ -5014,7 +5024,7 @@ static dynamicprogramming_DeletionOut_subcell_tag const DeletionOut =
       {
         uint32_t last_pos = distances.size() - 1;
         uint32_t pos_i;
-        uint32_t last_seq = distances[ 0 ].size() - 1;
+        uint32_t last_seq = ((std::vector<PositionEntenteDistances>)(distances[ 0 ])).size() - 1;
         uint32_t seq_i;
         for( seq_i = 0; seq_i <= last_seq ; seq_i++ ) {
           os << "From Sequence " << seq_i << ":" << endl;
@@ -23650,15 +23660,21 @@ static dynamicprogramming_DeletionOut_subcell_tag const DeletionOut =
       return;
     } // alignLeaves( Parameters const &, ProfileTreeType const &, MultipleAlignment & )
 
+
     /**
      * \class AlignmentProfileAccessor
      * \author Ted Holzman
      * \date 2/29/2012
      *
      * This is a class to access the inner class DynamicProgramming::AlignmentProfile.
-     * It contains input and access accessor functions.
+     * It contains input and accessor functions.
      */
+
     namespace io = boost::iostreams;
+    using namespace std;
+    using namespace galosh;
+    using namespace boost::xpressive;
+
     template <typename ResidueType,
             typename ProbabilityType,
             typename ScoreType,
@@ -23670,6 +23686,19 @@ static dynamicprogramming_DeletionOut_subcell_tag const DeletionOut =
        public:
           typedef ResidueType APAResidueType;
           /**
+           * \var std::map<std::string,std::string> > kvPairs;
+           *
+           * When parsing an Alignment Profile, there may be lines whose first non-blank character is a pound-sign.
+       	   * Everything after the pound-sign is ignored <em> in so far as the Alignment Profile proper</em> is concerned.
+           * However, the comment lines may contain key-value pairs of the form <key>=<value>.  These can be accessed
+           * later for any purpose.  Our first use is to supply the n-of-sequences which went into the generation of
+           * the alignment profile, in a format like this:
+           *
+           *    nseq=10
+           */
+
+          std::map<std::string,std::string> kvPairs;
+          /**
            * Stream reader/parsing routines
            *
            * \operator >>
@@ -23677,23 +23706,32 @@ static dynamicprogramming_DeletionOut_subcell_tag const DeletionOut =
            */
            friend std::istream &
            operator>> (
-              std::istream & is,
+              std::istream & normalStream,
               AlignmentProfileAccessor<ResidueType, ProbabilityType, ScoreType, MatrixValueType> & prof
            )
            {
-           /**
-            * Don't even begin if the input stream is at EOF or in a failed state.
-            * Otherwise, clear the current vector and iterate through the stream.  Each
-            * line is an <AlignmentProfilePosition> in square brackets.  It consists of
-            * MatchEmissionParameters followed by GlobalParameters
-            */
+              io::filtering_istream is;
+         	  galosh::input_comment_diversion_filter * icdf;
+         	  is.push(galosh::input_comment_diversion_filter());
+              icdf = is.component<input_comment_diversion_filter>((int)(is.size()-1));
+              is.push(normalStream);
+
+        	   /**
+               * Don't even begin if the input stream is at EOF or in a failed state.
+               * Otherwise, clear the current vector and iterate through the stream.  Each
+               * line is an <AlignmentProfilePosition> in square brackets.  It consists of
+               * MatchEmissionParameters followed by GlobalParameters
+               */
                assert( !is.fail() && !is.eof());
                prof.clear();
-               int lcount = 0;  //debug
+               int lcount = 0;  //debug and/or error reporting
+               char c;
                while( !is.eof()) {
             	  typename DynamicProgramming<ResidueType,ProbabilityType,ScoreType,MatrixValueType>::AlignmentProfilePosition curPosition;
             	      //is >> "[ ";
-                  assert(is.get() == '[');
+            	  c = is.get();
+            	  if(c == '\n' || c == -1) continue;
+                  assert(c == '[');
                   assert(is.get() == ' ');
                   MatchEmissionParameters<ResidueType,ProbabilityType> tmpMEP;
                   tmpMEP.readMatchEmissionParameters(is);
@@ -23703,33 +23741,68 @@ static dynamicprogramming_DeletionOut_subcell_tag const DeletionOut =
                   GlobalParameters<ResidueType,ProbabilityType> tmpGP;
                   tmpGP.readGlobalParameters(is);
                   curPosition.GlobalParameters<ResidueType,ProbabilityType>::copyFrom(tmpGP);
-                  char c = is.get();
+                  c = is.get();
                   if(c != ' ') {
                      std::cerr << "Problem parsing alignment profile on line " << lcount+1 << std::endl;
                      std::cerr << "Expected ' ]', saw: " << std::endl;
                      do {
-                    	   std::cerr << c << std::endl;
+                        std::cerr << c << std::endl;
                      } while ((c = is.get()) != '\n');
                   }
                   prof.push_back(curPosition);
- //std::cerr << tmpMEP << std::endl;
- //std::cerr << tmpGP  << std::endl;
- //std::cerr << curPosition << std::endl;
                   ++lcount;
                   is.ignore( 100000, '\n' );
               }
+
+              ///TAH 3/12  debug code:
               //std::cerr << "Read " << ++lcount << " alignment profile lines.\n"; std::cerr.flush();
-///TAH 3/12  debug code:
-/**
- * having read in and created an AlignmentProfile, is it the same when we
- * output it again
- */
-/*
-std::ofstream testout("test.profile.out");
-testout << static_cast<typename DynamicProgramming<ResidueType,ProbabilityType,ScoreType,MatrixValueType>::AlignmentProfile>(prof);
-testout.close();
-*/
-              return is;
+              /**
+               * having read in and created an AlignmentProfile, make sure it the same when we
+               * output it again
+               */
+              /*
+                std::ofstream testout("test.profile.out");
+                testout << static_cast<typename DynamicProgramming<ResidueType,ProbabilityType,ScoreType,MatrixValueType>::AlignmentProfile>(prof);
+                testout.close();
+              */
+              ///TAH 3/12 end debug code
+
+              /**
+               * For detailed information on the "placeholder" thing, see the documentation for xpressive.  Basically it is a way
+               * of allowing the semantic portion of a xpressive regular expression (the part in braces) to access a variable that
+               * has no lvalue at compile time.
+               */
+
+              placeholder<std::map<std::string,std::string> > dummy;
+              // match a quoted string
+              sregex quoteStr = as_xpr('"') >> *~(as_xpr('"')) >> '"';
+              // match a kv pair, where the v can be a quoted string
+              sregex pair = -*_ >> ( (s1= +_w) >> "=" >> (s2= (+_w | quoteStr)) )
+                 [ dummy[s1] = as<std::string>(s2) ];
+              // Match one or more token=token pairs, separated
+              // by anything
+              sregex pairs = pair >> *(-+_ >> pair);
+              smatch what;
+              what.let(dummy = prof.kvPairs);
+              regex_search(icdf->get_raw_comments(),what,pairs);
+              /// TAH 4/12 debug code:
+              /*
+              std::cerr << "Contents of raw comment string\n";
+              std::cerr << icdf->get_raw_comments() << std::endl; cerr.flush();
+              std::cerr << "Contents of key/value map\n";
+              for(map<string,string>::iterator  it = prof.kvPairs.begin(); it != prof.kvPairs.end(); it++ ) {
+                 std::cerr << "key: " << it->first << ", val: " << it->second << endl;
+              }
+              std::cerr.flush();
+              */
+              //end debug code
+              /**
+               * \note - it is an interesting question whether we should return \a is (the filtering iStream) or \a normalStream
+               * the non-filtering one. I think that, for the time being, it is fine to return either.  It may be useful, in the
+               * future to capture the returned filtering_istream, get its input_comment_diversion_filter, and get the raw comments
+               * from it.  But currently we're only interested in the key=value pairs, which are made available in kvPairs.
+               **/
+               return is;
            }; // operator>>(std::istream,alignmentprofile)
 
     	   bool
@@ -23748,11 +23821,11 @@ testout.close();
               AlignmentProfileAccessor<ResidueType, ProbabilityType, ScoreType, MatrixValueType> & prof
            )
            {
-              std::ifstream is(fn);
-    	      return fromFile(is,prof);
+               std::ifstream profileFile(const_cast<char *>(fn));
+        	   return fromFile(profileFile,prof);
     	   } // fromFile(stream, AlignmentProfile) wrapper around >>
 
-           /// \todo check that the latter two functions work when they're
+           /// \todo check that the next two functions work when they're
            /// actually compiled.
 
            bool

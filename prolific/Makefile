@@ -74,6 +74,7 @@ Fasta.hpp \
 Random.hpp \
 DynamicProgramming.hpp \
 Parameters.hpp \
+prolific_io_helpers.hpp \
 AminoAcid20.hpp
 
 PROLIFICTESTS_INCS = $(INCS)

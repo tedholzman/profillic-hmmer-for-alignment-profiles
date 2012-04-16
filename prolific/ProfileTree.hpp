@@ -528,7 +528,7 @@ template <typename ResidueType,
      * argument, and the order is the order in which the children were added.
      * Note that this means that children are indexed from 1, not 0.
      *
-     * WARNING: holding onto a reference to the child is dangerous if the tree
+     * \warning holding onto a reference to the child is dangerous if the tree
      * is to be modified.  Use getChildPromise instead if you plan on changing
      * the topology of the tree while holding a reference to a child.
      */
@@ -563,10 +563,11 @@ template <typename ResidueType,
       //  vertex_id = get( vertex_index, m_graph );
       typename graph_traits<graph_t>::adjacency_iterator ai, ai_end;
       uint32_t child_i = 1;
+
       // TODO: Is there a more efficient way?  The underlying type is vecS (a
       // vector), so shouldn't I be able to get constant-time access?
-      for( tie( ai, ai_end ) =
-             adjacent_vertices( parent_vertex, m_graph );
+      for(tie( ai, ai_end ) =
+             adjacent_vertices(parent_vertex, m_graph );
            ai != ai_end;
            ++ai, ++child_i
       ) {
@@ -721,7 +722,7 @@ template <typename ResidueType,
           return getChildVertex( parent_vertex, ( i + 1 ) );
         }
       } // End foreach potential which_child index i
-
+      return 0; // TAH 4/12 make the compiler happy.  This should never occur.
     } // drawChild( vertex_t const &, vector<ProbabilityType> const * const, Random & ) const
 
     /**

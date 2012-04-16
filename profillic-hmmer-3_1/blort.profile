@@ -1,3 +1,5 @@
+# behold.  here comes a key/value pair! nseq=9 and here is another frankenstein="a mischeivous monster" and just for good measure, nseq=10
+# note that comments may be put at the end of any line.  And, in the future, we may choose to add per-position extra info via line comments.
 [ M:(A=0.25,C=0.25,G=0.25,T=0.25), M->(M=0.001735027,I=0.2037295,D=0.7945355), I->(M=0.5,I=0.5), D->(M=0.5,D=0.5), I:(A=0.1998765,C=0.5998703,G=0.0007527487,T=0.1995005), N->(N=5.045593e-06,B=0.999995), B->(M=0.2017431,D=0.7982569), C->(C=0.5,T=0.5) ]
 [ M:(A=1.0,C=0.0,G=0.0,T=0.0), M->(M=0.4999988,I=5.699743e-08,D=0.5000012), I->(M=0.3060601,I=0.6939398), D->(M=0.1995007,D=0.8004993), I:(A=0.3677604,C=0.254166,G=0.2516362,T=0.1264375), N->(N=0.5,B=0.5), B->(M=0.5,D=0.5), C->(C=0.5,T=0.5) ]
 [ M:(A=0.0,C=1.0,G=0.0,T=0.0), M->(M=0.2012612,I=1.981676e-08,D=0.7987388), I->(M=0.2549108,I=0.7450892), D->(M=0.1898452,D=0.8101548), I:(A=0.3100407,C=0.3653102,G=0.2063044,T=0.1183448), N->(N=0.5,B=0.5), B->(M=0.5,D=0.5), C->(C=0.5,T=0.5) ]

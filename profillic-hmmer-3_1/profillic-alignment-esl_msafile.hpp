@@ -624,8 +624,8 @@ template <typename ProfileType>
 static int
 profillic_esl_alignment_profile_Read(ESLX_MSAFILE *afp, ESL_MSA **ret_msa, ProfileType * profile_ptr )
 {
-  /// \note Right now this isn't actually using the open file pointer; for convenience I just use the profile.fromFile( <filename> ) method.
-  /// \todo Use convenience fns in esl_buffer.h; see eg hmmer-3.1/easel/esl_msafile_stockholm.c for examples...
+
+  /// \note modifying to use boost io functions, to read "#" comment lines and extract key/val pairs from the comments
   ESL_MSA                 *msa      = NULL;
 //  string profile_string;
   char *buf;
@@ -648,22 +648,9 @@ profillic_esl_alignment_profile_Read(ESLX_MSAFILE *afp, ESL_MSA **ret_msa, Profi
   //if (feof(afp->bf->fp))  { status = eslEOF; goto ERROR; }
   afp->errmsg[0] = '\0';
 
-  // Read in the galosh profile (from profillic)
-  //fseek( afp->bf->fp, 0, SEEK_END ); // go to the end
-  //len = afp->bf->ftell( afp->bf->fp ); // get the position at the end (length)
-  //fseek( afp->bf->fp, 0, SEEK_SET ); // go to the beginning again.
-
-  //ESL_ALLOC_CPP( char, buf, sizeof( char ) * len ); //malloc buffer
-  //fread( buf, len, 1, afp->bf->fp ); //read into buffer
-
-  //profile_string = buf;
-  //profile_ptr->fromString( profile_string );
+  // Read in the galosh alignment profile (from profuse)
   profile_ptr->fromFile(afp->bf->filename,*profile_ptr);
-  //if (buf)      free(buf);
-  // TODO: WHY WON'T THIS WORK?  See HACKs in profillic-hmmbuild.cpp to work around it.
-  //fseek( afp->bf->fp, 0, SEEK_END ); // go to the end (to signal there's no more profiles in the file, the next time we come to this function)
-
-  // Calculate the consensus sequence.
+  // Construct the consensus sequence.
   profile_length = profile_ptr->length();
   consensus_sequence.reinitialize( profile_length );
   for( pos_i = 0; pos_i < profile_length; pos_i++ ) {
@@ -679,9 +666,11 @@ profillic_esl_alignment_profile_Read(ESLX_MSAFILE *afp, ESL_MSA **ret_msa, Profi
   if (! afp->abc &&  (msa = esl_msa_Create(                 16, -1)) == NULL) { status = eslEMEM; goto ERROR; }
 
 
-  // Set first-and-only seq to the consensus.  This should set sqlen[0] to the profile's length and set ax to have length 1 and ax[0] to be the sequence itself.  Also msa->sqname[0] to the "name" of that consensus sequence.
+  // Set first-and-only seq to the consensus.
+  // This should set sqlen[0] to the profile's length and set ax to have length 1 and
+  // ax[0] to be the sequence itself.  Also msa->sqname[0] to the "name" of that consensus sequence.
 
-  /* if nec, make room for the new seq */
+  /* if necessary, make room for the new seq */
   if (msa->nseq >= msa->sqalloc && (status = esl_msa_Expand(msa)) != eslOK) return status;
   seqidx = msa->nseq; // 0
   msa->nseq++; // = 1
@@ -689,20 +678,28 @@ profillic_esl_alignment_profile_Read(ESLX_MSAFILE *afp, ESL_MSA **ret_msa, Profi
   // NOTE: Could add description of this "sequence" here, using esl_msa_SetSeqDescription(msa, seqidx, desc).
 #ifdef eslAUGMENT_ALPHABET
   if (msa->flags & eslMSA_DIGITAL)
-    {
-      // NOTE (profillic): There was a bug in this; it had said .."esl_abc_dsqcat(msa->abc, " where it should have said .."esl_abc_dsqcat(msa->abc->inmap, "
-      if((status = esl_abc_dsqcat(msa->abc->inmap, &(msa->ax[seqidx]), &(msa->sqlen[seqidx]), tmp_consensus_output_stream.str().c_str(), profile_length)) != eslOK) {
-        /* invalid char(s), get informative error message */
-        if (esl_abc_ValidateSeq(msa->abc, tmp_consensus_output_stream.str().c_str(), profile_length, afp->errmsg) != eslOK)
-          ESL_XFAIL(eslEFORMAT, errmsg2, "%s (line %d): %s", msa->sqname[0], afp->linenumber, afp->errmsg);
-      }
-    }
+  {
+     // NOTE (profillic): There was a bug in this; it had said .."esl_abc_dsqcat(msa->abc, "
+	 // where it should have said .."esl_abc_dsqcat(msa->abc->inmap, "
+     if((status = esl_abc_dsqcat(
+    		           msa->abc->inmap,
+    		           &(msa->ax[seqidx]),
+    		           &(msa->sqlen[seqidx]),
+    		           tmp_consensus_output_stream.str().c_str(),
+    		           profile_length)
+       ) != eslOK)
+       {
+          /* invalid char(s), get informative error message */
+          if (esl_abc_ValidateSeq(msa->abc, tmp_consensus_output_stream.str().c_str(), profile_length, afp->errmsg) != eslOK)
+             ESL_XFAIL(eslEFORMAT, errmsg2, "%s (line %d): %s", msa->sqname[0], afp->linenumber, afp->errmsg);
+       }
+  }
 #endif
   if (! (msa->flags & eslMSA_DIGITAL))
-    {
-      status = esl_strcat(&(msa->aseq[seqidx]), 0, tmp_consensus_output_stream.str().c_str(), profile_length);
-      msa->sqlen[seqidx] = profile_length;
-    }
+  {
+     status = esl_strcat(&(msa->aseq[seqidx]), 0, tmp_consensus_output_stream.str().c_str(), profile_length);
+     msa->sqlen[seqidx] = profile_length;
+  }
   msa->alen = profile_length;
 
   // .... OR read in a fasta file of sequences too.

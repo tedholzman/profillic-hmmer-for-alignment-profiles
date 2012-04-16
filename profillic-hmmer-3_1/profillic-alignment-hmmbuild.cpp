@@ -202,7 +202,7 @@ profillic_p7_banner(FILE *fp, char *progname, char *banner)
   if (appname != NULL) free(appname);
   return;
 }
-/////////////// End profillic-hmmer //////////////////////////////////
+/* ////////////// End profillic-hmmer ///////////////////////////////// */
 
 typedef struct {
 #ifdef HMMER_THREADS
@@ -256,6 +256,8 @@ static ESL_OPTIONS options[] = {
   { "--profillic-dna",    eslARG_NONE, FALSE,NULL, NULL,    CONOPTS,    NULL,     NULL, "input msa is a DNA galosh alignment profile (from profuse)",       3 },
   { "--symfrac", eslARG_REAL,   "0.5", NULL, "0<=x<=1", NULL,   "--fast",   NULL, "sets sym fraction controlling --fast construction",     3 },
   { "--fragthresh",eslARG_REAL, "0.5", NULL, "0<=x<=1", NULL,     NULL,     NULL, "if L <= x*alen, tag sequence as a fragment",            3 },
+  //TAH 4/12
+  { "--nseq",    eslARG_INT,    "0",   NULL, "n>=0",    NULL,     NULL,     NULL, "override n of seqs from msa/alignment profile",        3 },
 /* Alternate relative sequence weighting strategies */
   /* --wme not implemented in HMMER3 yet */
   { "--wpb",     eslARG_NONE,"default",NULL, NULL,    WGTOPTS,    NULL,      NULL, "Henikoff position-based weights",                      4 },
@@ -319,14 +321,14 @@ struct cfg_s {
 
   char         *alifile;	/* name of the alignment file we're building HMMs from  */
   int           fmt;		/* format code for alifile */
-  ESLX_MSAFILE *afp;            /* open alifile  */
+  ESLX_MSAFILE *afp;        /* open alifile  */
   ESL_ALPHABET *abc;		/* digital alphabet */
 
-  char         *hmmName;        /* hmm file name supplied from -n          */
-  char         *hmmfile;        /* file to write HMM to                    */
-  FILE         *hmmfp;          /* HMM output file handle                  */
+  char         *hmmName;    /* hmm file name supplied from -n          */
+  char         *hmmfile;    /* file to write HMM to                    */
+  FILE         *hmmfp;      /* HMM output file handle                  */
 
-  char         *postmsafile;	/* optional file to resave annotated, modified MSAs to  */
+  char         *postmsafile;/* optional file to resave annotated, modified MSAs to  */
   FILE         *postmsafp;	/* open <postmsafile>, or NULL */
 
   int           nali;		/* which # alignment this is in file (only valid in serial mode)   */
@@ -338,6 +340,7 @@ struct cfg_s {
   int           do_stall;	/* TRUE to stall the program until gdb attaches */
 
   int           use_priors; /* TRUE except when esl_opt_GetBoolean(go, "--noprior") */
+  int           nseq;       /* Assume the alignment profile was created from this many sequences */
 };
 
 
@@ -471,7 +474,8 @@ profillic_output_header(const ESL_GETOPTS *go, const struct cfg_s *cfg)
   if (esl_opt_IsUsed(go, "--fast")       && fprintf(cfg->ofp, "# model architecture construction:  fast/heuristic\n")                                 < 0) ESL_EXCEPTION_SYS(eslEWRITE, "write failed");
   if (esl_opt_IsUsed(go, "--hand")       && fprintf(cfg->ofp, "# model architecture construction:  hand-specified by RF annotation\n")                < 0) ESL_EXCEPTION_SYS(eslEWRITE, "write failed");
   if (esl_opt_IsUsed(go, "--profillic-amino")       && fprintf(cfg->ofp, "# model architecture construction:  use input amino profile\n")                < 0) ESL_EXCEPTION_SYS(eslEWRITE, "write failed");
-  if (esl_opt_IsUsed(go, "--profillic-dna")       && fprintf(cfg->ofp, "# model architecture construction:  use input dna profile\n")                < 0) ESL_EXCEPTION_SYS(eslEWRITE, "write failed");
+  if (esl_opt_IsUsed(go, "--profillic-dna")       && fprintf(cfg->ofp, "# model architecture construction:  use input dna profile\n")                 < 0) ESL_EXCEPTION_SYS(eslEWRITE, "write failed");
+  if (esl_opt_IsUsed(go, "--nseq")       && fprintf(cfg->ofp, "# n of sequences in profile:        %d\n",        esl_opt_GetInteger(go,"--nseq"))     < 0) ESL_EXCEPTION_SYS(eslEWRITE, "write failed");
   if (esl_opt_IsUsed(go, "--symfrac")    && fprintf(cfg->ofp, "# sym fraction for model structure: %.3f\n",      esl_opt_GetReal(go, "--symfrac"))    < 0) ESL_EXCEPTION_SYS(eslEWRITE, "write failed");
   if (esl_opt_IsUsed(go, "--fragthresh") && fprintf(cfg->ofp, "# seq called frag if L <= x*alen:   %.3f\n",      esl_opt_GetReal(go, "--fragthresh")) < 0) ESL_EXCEPTION_SYS(eslEWRITE, "write failed");
   if (esl_opt_IsUsed(go, "--wpb")        && fprintf(cfg->ofp, "# relative weighting scheme:        Henikoff PB\n")                                    < 0) ESL_EXCEPTION_SYS(eslEWRITE, "write failed");
@@ -554,7 +558,8 @@ main(int argc, char **argv)
   cfg.my_rank    = 0;		           /* this gets reset below, if we init MPI */
   cfg.do_stall   = esl_opt_GetBoolean(go, "--stall");
   cfg.hmmName    = esl_opt_GetString(go, "-n"); /* NULL by default */
-
+  //TAH 4/12
+  cfg.nseq       = esl_opt_GetInteger(go,"--nseq"); /* 0 by default */
   cfg.use_priors = !esl_opt_GetBoolean(go, "--noprior");
 
   if( esl_opt_IsUsed(go, "--profillic-amino")||esl_opt_IsUsed(go, "--profillic-dna") ) {
