@@ -562,6 +562,7 @@ template <typename ResidueType,
       //typename property_map<Graph, vertex_index_t>::type 
       //  vertex_id = get( vertex_index, m_graph );
       typename graph_traits<graph_t>::adjacency_iterator ai, ai_end;
+
       uint32_t child_i = 1;
 
       // TODO: Is there a more efficient way?  The underlying type is vecS (a

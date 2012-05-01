@@ -306,6 +306,8 @@ static ESL_OPTIONS options[] = {
   { "--w_beta",   eslARG_REAL,  NULL, NULL, NULL,       NULL,      NULL,    NULL, "tail mass at which window length is determined",        8 },
   { "--w_length", eslARG_INT,   NULL, NULL, NULL,       NULL,      NULL,    NULL, "window length ",                                        8 },
   { "--noprior", eslARG_NONE,  FALSE, NULL, NULL,       NULL,      NULL,    NULL, "do not apply any priors",                                8 },
+  // TAH 4/12 Output hmm in linear space (instead of neg log)
+  { "--linspace", eslARG_NONE, NULL,  NULL, NULL,       NULL,      NULL,    NULL, "output hmm in linear space instead of negative log",     8 },
   {  0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
 };
 
@@ -340,7 +342,7 @@ struct cfg_s {
   int           do_stall;	/* TRUE to stall the program until gdb attaches */
 
   int           use_priors; /* TRUE except when esl_opt_GetBoolean(go, "--noprior") */
-  int           nseq;       /* Assume the alignment profile was created from this many sequences */
+  int           nseq;       /* TAH 3/12 Assume the alignment profile was created from this many sequences */
 };
 
 
@@ -475,6 +477,7 @@ profillic_output_header(const ESL_GETOPTS *go, const struct cfg_s *cfg)
   if (esl_opt_IsUsed(go, "--hand")       && fprintf(cfg->ofp, "# model architecture construction:  hand-specified by RF annotation\n")                < 0) ESL_EXCEPTION_SYS(eslEWRITE, "write failed");
   if (esl_opt_IsUsed(go, "--profillic-amino")       && fprintf(cfg->ofp, "# model architecture construction:  use input amino profile\n")                < 0) ESL_EXCEPTION_SYS(eslEWRITE, "write failed");
   if (esl_opt_IsUsed(go, "--profillic-dna")       && fprintf(cfg->ofp, "# model architecture construction:  use input dna profile\n")                 < 0) ESL_EXCEPTION_SYS(eslEWRITE, "write failed");
+  //TAH 3/12 nseq
   if (esl_opt_IsUsed(go, "--nseq")       && fprintf(cfg->ofp, "# n of sequences in profile:        %d\n",        esl_opt_GetInteger(go,"--nseq"))     < 0) ESL_EXCEPTION_SYS(eslEWRITE, "write failed");
   if (esl_opt_IsUsed(go, "--symfrac")    && fprintf(cfg->ofp, "# sym fraction for model structure: %.3f\n",      esl_opt_GetReal(go, "--symfrac"))    < 0) ESL_EXCEPTION_SYS(eslEWRITE, "write failed");
   if (esl_opt_IsUsed(go, "--fragthresh") && fprintf(cfg->ofp, "# seq called frag if L <= x*alen:   %.3f\n",      esl_opt_GetReal(go, "--fragthresh")) < 0) ESL_EXCEPTION_SYS(eslEWRITE, "write failed");
@@ -666,8 +669,6 @@ profillic_usual_master(const ESL_GETOPTS *go, struct cfg_s *cfg)
   else if (esl_opt_GetBoolean(go, "--rna"))     cfg->abc = esl_alphabet_Create(eslRNA);
   else                                          cfg->abc = NULL;
 
-  // TODO: REMOVE
-  //printf( "Hi from profillic_usual_master(..)!\n" );
   status = profillic_eslx_msafile_Open(&(cfg->abc), cfg->alifile, NULL, cfg->fmt, NULL, &(cfg->afp));
   if (status != eslOK) eslx_msafile_OpenFailure(cfg->afp, status);
 
@@ -757,22 +758,23 @@ profillic_usual_master(const ESL_GETOPTS *go, struct cfg_s *cfg)
     thread_loop(threadObj, queue, cfg, go);
   } else if(cfg->fmt == eslMSAFILE_PROFILLIC) {  ///TAH 3/12 change = to ==.  Still works?
     if( cfg->abc->type == eslDNA ) {
-    	  galosh::AlignmentProfileAccessor<seqan::Dna, floatrealspace, floatrealspace, floatrealspace> profile;
+      galosh::AlignmentProfileAccessor<seqan::Dna, floatrealspace, floatrealspace, floatrealspace> profile(cfg->nseq);
+           
       //galosh::ProfileTreeRoot<seqan::Dna, floatrealspace> profile;
       //TAH 2/12 for conversion to Alignment Profile.
       profillic_serial_loop(info, cfg, &profile, go);
     } else if( cfg->abc->type == eslAMINO ) {
       //galosh::ProfileTreeRoot<seqan::AminoAcid20, floatrealspace> profile;
       //TAH 2/12 for conversion to Alignment Profile
-    	  galosh::AlignmentProfileAccessor<seqan::AminoAcid20, floatrealspace, floatrealspace, floatrealspace> profile;
+      galosh::AlignmentProfileAccessor<seqan::AminoAcid20, floatrealspace, floatrealspace, floatrealspace> profile(cfg->nseq);
       profillic_serial_loop(info, cfg, &profile, go);
     } else {
       ESL_EXCEPTION(eslEUNIMPLEMENTED, "Sorry, at present the profillic-hmmbuild software can only handle amino and dna.");
     }
   } else {
 	//TAH 2/12
-	  //    profillic_serial_loop(info, cfg, (galosh::ProfileTreeRoot<seqan::Dna, floatrealspace> *)NULL, go);
-	  profillic_serial_loop(info, cfg, (galosh::AlignmentProfileAccessor<seqan::Dna, floatrealspace,floatrealspace,floatrealspace> *)NULL, go);
+        //    profillic_serial_loop(info, cfg, (galosh::ProfileTreeRoot<seqan::Dna, floatrealspace> *)NULL, go);
+	profillic_serial_loop(info, cfg, (galosh::AlignmentProfileAccessor<seqan::Dna, floatrealspace,floatrealspace,floatrealspace> *)NULL, go);
   }
 #else
   if( cfg->fmt = eslMSAFILE_PROFILLIC ) {
@@ -1187,8 +1189,7 @@ profillic_serial_loop(WORKER_INFO *info, struct cfg_s *cfg, ProfileType * profil
   double      entropy;
 
   cfg->nali = 0;
-  // TODO: REMOVE!
-  //printf( "HI from serial_loop!\n" );
+
   // Note weird hack to make sure we only try to read the profile in once.  TODO: Why doesn't EOF signal it?
   while ( ( ( cfg->afp->format == eslMSAFILE_PROFILLIC) ? ( cfg->nali == 0 ) : 1 ) && ( (status = profillic_eslx_msafile_Read(cfg->afp, &msa, profile_ptr)) != eslEOF) )
     {
@@ -1211,8 +1212,6 @@ profillic_serial_loop(WORKER_INFO *info, struct cfg_s *cfg, ProfileType * profil
       }
       entropy = p7_MeanMatchRelativeEntropy(hmm, info->bg);
       if ((status = output_result(cfg, errmsg, cfg->nali, msa, hmm, postmsa, entropy))         != eslOK) p7_Fail(errmsg);
-
-
 
       p7_hmm_Destroy(hmm);
       esl_msa_Destroy(msa);

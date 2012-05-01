@@ -35,7 +35,7 @@ extern "C" {
 #include "hmmer.h"
 }
 
-/////////////// For profillic-hmmer //////////////////////////////////
+/* ////////////// For profillic-hmmer ////////////////////////////////// */
 /// Stuff we needed to modify in order to compile it in c++:
 #include "profillic-hmmer.hpp"
 #include <seqan/basic.h>
@@ -480,19 +480,24 @@ profillic_p7_Builder(P7_BUILDER *bld, ESL_MSA *msa, ProfileType const * const pr
   P7_TRACE ***tr_ptr   = (opt_trarr != NULL || opt_postmsa != NULL) ? &tr : NULL;
   int         status;
 
-  /// \note This checks the alignment for "missing data chars" ('~'), which is not relevant to a profillic profile consensus, but should be fine to call.
-  if ((status =  validate_msa         (bld, msa))                       != eslOK) goto ERROR;
+  // \note This checks the alignment for "missing data chars" ('~'), which is not relevant to a profillic profile consensus, but should be fine to call.
+  /// \note TAH 4/12 Since the msa is really only a convenient abstraction, we can can
+  /// dispense with validating it.  More important, we have lied:  when an msa is created
+  /// via an alignment profile, we may well have set the nseq to something different from
+  /// 1.  But there is really only one sequence (the most probable path) in it.  This would
+  /// cause illegal array accesses if we let it go through some of the following code.
+  ///if ((status =  validate_msa         (bld, msa))                       != eslOK) goto ERROR;
 
   /// The following creates hashcode from the msa (or the consensus sequence of the galosh profile):
   /// \todo [profillic]: Consider altering this to create a checksum from the full Profile HMM somehow.
-  if ((status =  esl_msa_Checksum     (msa, &checksum))                 != eslOK) ESL_XFAIL(status, bld->errbuf, "Failed to calculate checksum"); 
+  ///  if ((status =  esl_msa_Checksum     (msa, &checksum))                 != eslOK) ESL_XFAIL(status, bld->errbuf, "Failed to calculate checksum");
   /// \note For now, we don't use this with profillic.  In the future, when we read in both an msa (viterbi alignments, perhaps .. or random alignment draws) and a profile, then we can use this for the msa.
-  if( msa->nseq > 1 ) {
-    if ((status =  relative_weights     (bld, msa))                       != eslOK) goto ERROR;
-  }
+  ///  if( msa->nseq > 1 ) {
+  ///  if ((status =  relative_weights     (bld, msa))                       != eslOK) goto ERROR;
+  ///}
 
-  /// \note this identifies "sequence fragments" as having length less than <fragthresh> times the profile length, and converts leading and trailing gaps into missing-data chars.
-  if ((status =  esl_msa_MarkFragments(msa, bld->fragthresh))           != eslOK) goto ERROR;
+  // \note this identifies "sequence fragments" as having length less than <fragthresh> times the profile length, and converts leading and trailing gaps into missing-data chars.
+  //if ((status =  esl_msa_MarkFragments(msa, bld->fragthresh))           != eslOK) goto ERROR;
 
   if ((status =  profillic_build_model          (bld, msa, profile_ptr, &hmm, tr_ptr))         != eslOK) goto ERROR;
   if ((status =  effective_seqnumber  (bld, msa, hmm, bg))              != eslOK) goto ERROR;
@@ -891,7 +896,7 @@ profillic_p7_Profillicmodelmaker(P7_BUILDER *bld, ESL_MSA * msa, ProfileType con
   int      M;                   /* length of new model in match states */
   int      apos;                /* counter for aligned columns         */
   char errbuf[eslERRBUFSIZE];
-
+                  // TAH 3/12 re: one less, not true in alignment profiles
   uint32_t pos_i; // Position in profile.  Corresponds to one less than match state pos in HMM.
   uint32_t res_i;
   ESL_DSQ hmmer_digitized_residue;
@@ -928,8 +933,10 @@ profillic_p7_Profillicmodelmaker(P7_BUILDER *bld, ESL_MSA * msa, ProfileType con
 ///    profile[ galosh::Transition::fromPreAlign ][ galosh::TransitionFromPreAlign::toPreAlign ]
     	   profile[ 0 ][galosh::profile_Insertion_distribution_tag()][ galosh::TransitionFromInsertion::toInsertion ]
     );
+  //Initialize hmm
   hmm->t[ 0 ][ p7H_II ] =  hmm->t[ 0 ][ p7H_MI ];
   hmm->t[ 0 ][ p7H_IM ] = ( 1 - hmm->t[ 0 ][ p7H_MI ] );
+  //Loop through alphabet letters for 0th sequence position
   for( res_i = 0; res_i < seqan::ValueSize<ResidueType>::VALUE; res_i++ ) {
     hmmer_digitized_residue =
       esl_abc_DigitizeSymbol( msa->abc, static_cast<char>( ResidueType( res_i ) ) );
@@ -949,7 +956,7 @@ profillic_p7_Profillicmodelmaker(P7_BUILDER *bld, ESL_MSA * msa, ProfileType con
       ( 1 - hmm->t[ 0 ][ p7H_MI ] ) *
       /// TAH 3/12 mod for using alignment profiles
       /// Assuming this is indexed by profile_Begin_distribution
-      ///profile[ galosh::Transition::fromBegin ][ galosh::TransitionFromBegin::toMatch ]
+      /// profile[ galosh::Transition::fromBegin ][ galosh::TransitionFromBegin::toMatch ]
       profile[ 0 ][galosh::profile_Begin_distribution_tag()][ galosh::TransitionFromBegin::toMatch ]
     );
   hmm->t[ 0 ][ p7H_MD ] =
@@ -966,27 +973,24 @@ profillic_p7_Profillicmodelmaker(P7_BUILDER *bld, ESL_MSA * msa, ProfileType con
   for( res_i = 1; res_i < hmm->abc->K; res_i++ ) {
     hmm->mat[ 0 ][ res_i ] = 0.0;
   }
-
+  /// \todo  TAH 4/12 have we taken care of position 0 in hmm matrix yet?
   for( pos_i = 0; pos_i < profile.length(); pos_i++ ) {
-//    if( be_verbose ) {
-//      cout << '.';
-//      cout.flush();
-//    }
+
     /// \todo If this is too slow, memorize the ResidueType( res_i )s.
     for( res_i = 0; res_i < seqan::ValueSize<ResidueType>::VALUE; res_i++ ) {
       hmmer_digitized_residue =
         esl_abc_DigitizeSymbol( msa->abc, static_cast<char>( ResidueType( res_i ) ) );
 
       ///TAH 3/12 this compiled.  Is it correct?  Should it be profile[ pos_i + 1]?
-      hmm->mat[ pos_i + 1 ][ hmmer_digitized_residue ] =
+      hmm->mat[ pos_i /*+ 1*/ ][ hmmer_digitized_residue ] =
         toDouble(
             profile[ pos_i ][galosh::profile_Match_emission_distribution_tag()][res_i]
 //          profile[ pos_i ][ galosh::Emission::Match ][ res_i ]
         );
-      /// TAH 3/12 check indexing
+      /// TAH 3/12 check indexing; Last position special case
       if( pos_i == ( profile.length() - 1 ) ) {
         // Use post-align insertions
-        hmm->ins[ pos_i + 1 ][ hmmer_digitized_residue ] =
+        hmm->ins[ pos_i /*+ 1*/ ][ hmmer_digitized_residue ] =
           toDouble(
               ///TAH 3/12 for alignment profile mods.
         		  ///check middle index.  Last index, Insert is substituted for post
@@ -1010,7 +1014,7 @@ profillic_p7_Profillicmodelmaker(P7_BUILDER *bld, ESL_MSA * msa, ProfileType con
 
 //        assert( hmm->ins[ pos_i + 1 ][ hmmer_digitized_residue ] == hmm->ins[ 0 ][ hmmer_digitized_residue ] );
       } else { // if this is the last position (use post-align insertions) .. else ..
-        hmm->ins[ pos_i + 1 ][ hmmer_digitized_residue ] =
+        hmm->ins[ pos_i /*+ 1*/ ][ hmmer_digitized_residue ] =
           toDouble(
             ///TAH 3/12 for alignment profile mods.
             ///check middle index
@@ -1021,26 +1025,26 @@ profillic_p7_Profillicmodelmaker(P7_BUILDER *bld, ESL_MSA * msa, ProfileType con
     } // End foreach res_i
     if( pos_i == ( profile.length() - 1 ) ) {
       // Use post-align insertions
-      hmm->t[ pos_i + 1 ][ p7H_IM ] =
+      hmm->t[ pos_i /*+ 1*/ ][ p7H_IM ] =
          toDouble(
         	     /// TAH 3/12 mod for using alignment profiles
         		 ///profile[ galosh::Transition::fromPostAlign ][ galosh::TransitionFromPostAlign::toTerminal ]
         		 profile[ pos_i ][galosh::profile_PostAlign_distribution_tag()][ galosh::TransitionFromPostAlign::toTerminal ]
          );
-      hmm->t[ pos_i + 1 ][ p7H_II ] =
+      hmm->t[ pos_i /*+ 1*/ ][ p7H_II ] =
          toDouble(
         	    /// TAH 3/12 mod for using alignment profiles
         		/// profile[ galosh::Transition::fromPostAlign ][ galosh::TransitionFromPostAlign::toPostAlign ]
         		 profile[ pos_i ][galosh::profile_PostAlign_distribution_tag()][ galosh::TransitionFromPostAlign::toPostAlign ]
          );
 
-      hmm->t[ pos_i + 1 ][ p7H_MM ] = //hmm->t[ pos_i + 1 ][ p7H_IM ];
+      hmm->t[ pos_i /*+ 1*/ ][ p7H_MM ] = //hmm->t[ pos_i + 1 ][ p7H_IM ];
         toDouble(
        	  /// TAH 3/12 mod for using alignment profiles
           /// profile[ galosh::Transition::fromPostAlign ][ galosh::TransitionFromPostAlign::toTerminal ]
           profile[ pos_i ][galosh::profile_PostAlign_distribution_tag()][ galosh::TransitionFromPostAlign::toTerminal ]
         );
-      hmm->t[ pos_i + 1 ][ p7H_MI ] = //1.0 - hmm->t[ pos_i + 1 ][ p7H_MM ];
+      hmm->t[ pos_i /*+ 1*/ ][ p7H_MI ] = //1.0 - hmm->t[ pos_i + 1 ][ p7H_MM ];
         toDouble(
        	     /// TAH 3/12 mod for using alignment profiles
              ///   profile[ galosh::Transition::fromPostAlign ][ galosh::TransitionFromPostAlign::toPostAlign ]
@@ -1053,45 +1057,45 @@ profillic_p7_Profillicmodelmaker(P7_BUILDER *bld, ESL_MSA * msa, ProfileType con
       //hmm->t[ pos_i + 1 ][ p7H_DD ] = 0;
 
     } else {  // if this is the last position (use post-align insertions) .. else ..
-      hmm->t[ pos_i + 1 ][ p7H_MM ] =
+      hmm->t[ pos_i /*+ 1*/ ][ p7H_MM ] =
         toDouble(
         	  /// TAH 3/12 mod for using alignment profiles
                   ///
         	  ///profile[ galosh::Transition::fromMatch ][ galosh::TransitionFromMatch::toMatch ]
         	  profile[ pos_i ][galosh::profile_Match_distribution_tag()][ galosh::TransitionFromMatch::toMatch ]
         );
-      hmm->t[ pos_i + 1 ][ p7H_MI ] =
+      hmm->t[ pos_i /*+ 1*/ ][ p7H_MI ] =
         toDouble(
           /// TAH 3/12 mod for using alignment profiles.
           ///profile[ galosh::Transition::fromMatch ][ galosh::TransitionFromMatch::toInsertion ]
         	  profile[ pos_i ][galosh::profile_Match_distribution_tag()][ galosh::TransitionFromMatch::toInsertion ]
         );
-      hmm->t[ pos_i + 1 ][ p7H_MD ] =
+      hmm->t[ pos_i /*+ 1*/ ][ p7H_MD ] =
         toDouble(
           /// TAH 3/12 mod for using alignment profiles.
           ///profile[ galosh::Transition::fromMatch ][ galosh::TransitionFromMatch::toDeletion ]
         	  profile[ pos_i ][galosh::profile_Match_distribution_tag()][ galosh::TransitionFromMatch::toDeletion ]
         );
   
-      hmm->t[ pos_i + 1 ][ p7H_IM ] =
+      hmm->t[ pos_i /*+ 1*/ ][ p7H_IM ] =
         toDouble(
           /// TAH 3/12 mod for using alignment profiles.
           ///profile[ galosh::Transition::fromInsertion ][ galosh::TransitionFromInsertion::toMatch ]
         	  profile[ pos_i ][galosh::profile_Insertion_distribution_tag()][ galosh::TransitionFromInsertion::toMatch ]
         );
-      hmm->t[ pos_i + 1 ][ p7H_II ] =
+      hmm->t[ pos_i /*+ 1*/ ][ p7H_II ] =
         toDouble(
           /// TAH 3/12 mod for using alignment profiles.  See note above.
           ///profile[ galosh::Transition::fromInsertion ][ galosh::TransitionFromInsertion::toInsertion ]
         	  profile[ pos_i ][galosh::profile_Insertion_distribution_tag()][ galosh::TransitionFromInsertion::toInsertion ]
         );
-      hmm->t[ pos_i + 1 ][ p7H_DM ] =
+      hmm->t[ pos_i /*+ 1*/ ][ p7H_DM ] =
         toDouble(
           /// TAH 3/12 mod for using alignment profiles.  See note above.
           ///profile[ galosh::Transition::fromDeletion ][ galosh::TransitionFromDeletion::toMatch ]
         	  profile[ pos_i ][galosh::profile_Deletion_distribution_tag()][ galosh::TransitionFromDeletion::toMatch ]
         );
-      hmm->t[ pos_i + 1 ][ p7H_DD ] =
+      hmm->t[ pos_i /*+ 1*/ ][ p7H_DD ] =
         toDouble(
           /// TAH 3/12 mod for using alignment profiles.  See note above.
           ///profile[ galosh::Transition::fromDeletion ][ galosh::TransitionFromDeletion::toDeletion ]

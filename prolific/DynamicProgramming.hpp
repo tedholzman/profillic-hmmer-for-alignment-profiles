@@ -23617,7 +23617,7 @@ static dynamicprogramming_DeletionOut_subcell_tag const DeletionOut =
           } // End if be_extra_verbose
 
           // Move along
-          // Don't decend further here.
+          // Don't descend further here.
           while( ( node_i != 0 ) && ( node_i_which_child == multiple_alignment.m_profileTree->childCount( node_i_parent ) ) ) {
             if( be_extra_verbose ) {
               cout << "This is the last child of its parent.  Ascending tree." << endl;
@@ -23673,7 +23673,8 @@ static dynamicprogramming_DeletionOut_subcell_tag const DeletionOut =
     namespace io = boost::iostreams;
     using namespace std;
     using namespace galosh;
-    using namespace boost::xpressive;
+    namespace bx = boost::xpressive;
+    using namespace bx;
 
     template <typename ResidueType,
             typename ProbabilityType,
@@ -23683,7 +23684,17 @@ static dynamicprogramming_DeletionOut_subcell_tag const DeletionOut =
     AlignmentProfileAccessor :
        public DynamicProgramming<ResidueType,ProbabilityType,ScoreType,MatrixValueType>::AlignmentProfile
     {
+       private:
+          int m_orig_nseq;
+
        public:
+          AlignmentProfileAccessor () {
+             m_orig_nseq = 0;
+          }
+
+          AlignmentProfileAccessor(int nseq) : m_orig_nseq(nseq)
+          {}     
+
           typedef ResidueType APAResidueType;
           /**
            * \var std::map<std::string,std::string> > kvPairs;
@@ -23778,11 +23789,11 @@ static dynamicprogramming_DeletionOut_subcell_tag const DeletionOut =
               sregex quoteStr = as_xpr('"') >> *~(as_xpr('"')) >> '"';
               // match a kv pair, where the v can be a quoted string
               sregex pair = -*_ >> ( (s1= +_w) >> "=" >> (s2= (+_w | quoteStr)) )
-                 [ dummy[s1] = as<std::string>(s2) ];
+                 [ dummy[s1] = bx::as<std::string>(s2) ];
               // Match one or more token=token pairs, separated
               // by anything
               sregex pairs = pair >> *(-+_ >> pair);
-              smatch what;
+              bx::smatch what;
               what.let(dummy = prof.kvPairs);
               regex_search(icdf->get_raw_comments(),what,pairs);
               /// TAH 4/12 debug code:
@@ -23796,6 +23807,13 @@ static dynamicprogramming_DeletionOut_subcell_tag const DeletionOut =
               std::cerr.flush();
               */
               //end debug code
+              /// Side effect. The idea here:  if somebody pre-set the number of original sequences (before the alignment
+              /// profile is read in, then that number will take precedence over any comment in the sequence.
+              /// Otherwise, nseq=10 will set the number of aligned sequences to 10.
+              if(prof.kvPairs.count("nseq")) {
+            	  if(prof.m_orig_nseq == 0) prof.m_orig_nseq = atoi(prof.kvPairs["nseq"].c_str());
+              }
+
               /**
                * \note - it is an interesting question whether we should return \a is (the filtering iStream) or \a normalStream
                * the non-filtering one. I think that, for the time being, it is fine to return either.  It may be useful, in the
@@ -23839,8 +23857,11 @@ static dynamicprogramming_DeletionOut_subcell_tag const DeletionOut =
               return fromFile(is,this);
            } // fromFile(std::istream) Read this AlignmentProfile
 
-
-    }; // AlignmentProfileAccessor
+           int
+           orig_nseq () { // access original number of sequences in alignment
+              return m_orig_nseq;
+           } // orig_nseq
+   }; // AlignmentProfileAccessor
 
 } // End namespace galosh
 
