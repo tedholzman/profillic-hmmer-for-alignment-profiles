@@ -1213,9 +1213,17 @@ profillic_serial_loop(WORKER_INFO *info, struct cfg_s *cfg, ProfileType * profil
       entropy = p7_MeanMatchRelativeEntropy(hmm, info->bg);
       if ((status = output_result(cfg, errmsg, cfg->nali, msa, hmm, postmsa, entropy))         != eslOK) p7_Fail(errmsg);
 
+
       p7_hmm_Destroy(hmm);
+      // TAH 4/12 Because we lied about the number of sequences, this will fail in free().
+      // So better un-lie.
+      msa->nseq = 1;
+      if(postmsa){
+    	  postmsa->nseq = 1;
+    	  esl_msa_Destroy(postmsa);
+      }
       esl_msa_Destroy(msa);
-      esl_msa_Destroy(postmsa);
+
     }
   /// \todo DOPTE ERE I AM.  Now there's no status returned!
   /// \note weird hack to make sure we only try to read the profillic profile in once.  \todo Why doesn't EOF signal it?

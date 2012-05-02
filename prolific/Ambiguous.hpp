@@ -129,8 +129,8 @@ inline size_t ambiguousCount ( seqan::Dna5 const & source, seqan::Dna const & )
     galosh::_Size_Table_Ambiguous_Dna5_2_Dna<>::VALUE[ source.value ];
 }
 
-//////////////////////////////////////////////////////////////////////////////
-// Iupac is ambiguous over Dna
+/*/////////////////////////////////////////////////////////////////////////////
+// Iupac is ambiguous over Dna */
 template <>
 struct IsAmbiguous<seqan::Iupac, seqan::Dna>
 {
