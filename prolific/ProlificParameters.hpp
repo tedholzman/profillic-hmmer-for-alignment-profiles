@@ -79,13 +79,13 @@ template <class ResidueType,
 
         ar & BOOST_SERIALIZATION_NVP( useDeletionsForInsertionsParameters );
 //        ar & BOOST_SERIALIZATION_NVP( expectedDeletionsCounts );   /// TAH 4/2012 macro has problems with pointer types
-        ar & boost::serialization::make_nvp<vector<double> >("expectedDeletionsCounts",expectedDeletionsCounts);
+        ar & boost::serialization::make_nvp<vector<double> >("expectedDeletionsCounts",(*expectedDeletionsCounts));
 //        ar & BOOST_SERIALIZATION_NVP( expectedInsertionsCounts );
-        ar & boost::serialization::make_nvp<vector<double> >("expectedInsertionsCounts",expectedInsertionsCounts);
+        ar & boost::serialization::make_nvp<vector<double> >("expectedInsertionsCounts",(*expectedInsertionsCounts));
 //        ar & BOOST_SERIALIZATION_NVP( expectedDeletionLengthAsProfileLengthFractions );
-        ar & boost::serialization::make_nvp<vector<double> >("expectedDeletionLengthAsProfileLengthFractions",expectedDeletionLengthAsProfileLengthFractions);
+        ar & boost::serialization::make_nvp<vector<double> >("expectedDeletionLengthAsProfileLengthFractions",(*expectedDeletionLengthAsProfileLengthFractions));
 //        ar & BOOST_SERIALIZATION_NVP( expectedInsertionLengthAsProfileLengthFractions );
-        ar & boost::serialization::make_nvp<vector<double> >("expectedInsertionLengthAsProfileLengthFractions",expectedInsertionLengthAsProfileLengthFractions);
+        ar & boost::serialization::make_nvp<vector<double> >("expectedInsertionLengthAsProfileLengthFractions",(*expectedInsertionLengthAsProfileLengthFractions));
         ar & BOOST_SERIALIZATION_NVP( minExpectedDeletionLength );
         ar & BOOST_SERIALIZATION_NVP( minExpectedInsertionLength );
         ar & BOOST_SERIALIZATION_NVP( preAlignInsertion );
@@ -142,7 +142,7 @@ template <class ResidueType,
        *
        * @see useDeletionsForInsertionsParameters
        */
-      vector<double> & expectedDeletionsCounts;
+      vector<double> * expectedDeletionsCounts;
   #define DEFAULT_expectedDeletionsCounts NULL
 
       /**
@@ -156,7 +156,7 @@ template <class ResidueType,
        *
        * @see useDeletionsForInsertionsParameters
        */
-      vector<double> & expectedInsertionsCounts;
+      vector<double> * expectedInsertionsCounts;
   #define DEFAULT_expectedInsertionsCounts NULL
 
       /**
@@ -175,7 +175,7 @@ template <class ResidueType,
        *
        * @see useDeletionsForInsertionsParameters
        */
-      vector<double> & expectedDeletionLengthAsProfileLengthFractions;
+      vector<double> * expectedDeletionLengthAsProfileLengthFractions;
   #define DEFAULT_expectedDeletionLengthAsProfileLengthFractions NULL
 
       /**
@@ -191,7 +191,7 @@ template <class ResidueType,
        *
        * @see useDeletionsForInsertionsParameters
        */
-      vector<double> & expectedInsertionLengthAsProfileLengthFractions;
+      vector<double> * expectedInsertionLengthAsProfileLengthFractions;
   #define DEFAULT_expectedInsertionLengthAsProfileLengthFractions NULL
 
       /**
@@ -926,7 +926,7 @@ template <class ResidueType,
           os << "expectedDeletionsCounts = NULL" << endl;
               } else {
           os << "expectedDeletionsCounts = { ";
-          for( uint32_t cr_i = 0; cr_i < ((std::vector *)expectedDeletionsCounts)->size(); cr_i++ ) {
+          for( uint32_t cr_i = 0; cr_i < ((std::vector<double> *)expectedDeletionsCounts)->size(); cr_i++ ) {
             if( cr_i > 0 ) {
               os << ", ";
             }
@@ -939,7 +939,7 @@ template <class ResidueType,
           os << "expectedInsertionsCounts = NULL" << endl;
               } else {
           os << "expectedInsertionsCounts = { ";
-          for( uint32_t cr_i = 0; cr_i < ((std::vector *)expectedInsertionsCounts)->size(); cr_i++ ) {
+          for( uint32_t cr_i = 0; cr_i < ((std::vector<double> *)expectedInsertionsCounts)->size(); cr_i++ ) {
             if( cr_i > 0 ) {
               os << ", ";
             }
@@ -952,7 +952,7 @@ template <class ResidueType,
           os << "expectedDeletionLengthAsProfileLengthFractions = NULL" << endl;
               } else {
           os << "expectedDeletionLengthAsProfileLengthFractions = { ";
-          for( uint32_t cr_i = 0; cr_i < ((std::vector *)expectedDeletionLengthAsProfileLengthFractions)->size(); cr_i++ ) {
+          for( uint32_t cr_i = 0; cr_i < ((std::vector<double> *)expectedDeletionLengthAsProfileLengthFractions)->size(); cr_i++ ) {
             if( cr_i > 0 ) {
               os << ", ";
             }
@@ -965,7 +965,7 @@ template <class ResidueType,
           os << "expectedInsertionLengthAsProfileLengthFractions = NULL" << endl;
               } else {
           os << "expectedInsertionLengthAsProfileLengthFractions = { ";
-          for( uint32_t cr_i = 0; cr_i < ((std::vector *)expectedInsertionLengthAsProfileLengthFractions)->size(); cr_i++ ) {
+          for( uint32_t cr_i = 0; cr_i < ((std::vector<double> *)expectedInsertionLengthAsProfileLengthFractions)->size(); cr_i++ ) {
             if( cr_i > 0 ) {
               os << ", ";
             }

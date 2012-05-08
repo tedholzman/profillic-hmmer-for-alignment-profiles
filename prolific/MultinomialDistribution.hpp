@@ -49,6 +49,8 @@ using std::vector;
 #include <limits>
 using std::numeric_limits;
 #include <math.h>
+#include </usr/include/stdint.h>
+#include </usr/include/assert.h>
 
 #include "Random.hpp"
 #include "Ambiguous.hpp"
@@ -57,8 +59,10 @@ using std::numeric_limits;
 #include <boost/serialization/utility.hpp>
 #include <boost/serialization/list.hpp>
 #include <boost/serialization/version.hpp>
+#include <boost/lexical_cast.hpp>   ///TAH 2/12
 
 #include <seqan/basic.h>
+#include "Algebra.hpp"
 using seqan::ordValue;
 
 namespace galosh {
@@ -87,7 +91,10 @@ namespace galosh {
     // template instantiations need to directly access each other's values...
     static uint32_t const m_elementCount = seqan::ValueSize<ValueType>::VALUE;
     ProbabilityType m_probs[ m_elementCount ];
-
+    
+    std::string 
+    toString () const;
+ 
     /**
      * Inner class for ambiguous values with callbacks for any change.  Note
      * that the AmbiguousValue will not change if you alter the
@@ -815,6 +822,53 @@ namespace galosh {
       // Call operator=
       *this = copy_from;
     } // <init>( MultinomialDistribution<AnyProbabilityType> const & )
+
+  /**
+   * \fn std::string MultinomialDistribution::toString() const
+   * \brief create a string representation of a MultinomialDistribution object.
+   *
+   * This has been split off from Paul's original writeMultinomialDistribution, so
+   * so that the string for applications other than direct output (e.g. output to
+   * somewhere other than cout.
+   *
+   * TAH 1/12
+   */
+
+  template <typename ValueType,
+            typename ProbabilityType>
+  GALOSH_INLINE_INIT
+  std::string
+  MultinomialDistribution<ValueType,ProbabilityType>:: 
+  toString() const {
+    	   if(m_elementCount == 0) return "()";
+   	   std::string retVal = "(";
+   	   for( uint32_t i = 0; i < m_elementCount; i++ )
+   	   {
+   	      if( i != 0 ) {
+   	         retVal += ",";
+   	      }
+   	      retVal += ValueType( i );
+   	      retVal += "=";
+              /// Paul's original note from writeMultnomialDistribution
+                /// The cast to double forces the printed output to be how a double
+   	        /// prints, not how a ProbabilityType prints.  This is safe because we
+   	        /// generally keep values above some minimal value.  See normalize(
+   	        /// ProbabilityType ).
+   	        /// os << ( double )m_probs[ i ];
+                /// 
+                /// \todo Here we're using lexical_cast instead of ( double ) - this is after
+                /// hours of suffering with "createRandomSequence" which uses "floatrealspace"
+                /// for its ProbabilityType and somehow failed to compile.  It would be good
+                /// to understand the compilation failure.  
+              std::ostringstream oss;
+              oss << m_probs[ i ];
+       	      retVal += oss.str();
+
+   	   }
+   	   retVal += ")";
+   	   return retVal;
+  }
+
 
   template <typename ValueType,
             typename ProbabilityType>

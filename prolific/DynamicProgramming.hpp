@@ -8099,7 +8099,7 @@ static dynamicprogramming_DeletionOut_subcell_tag const DeletionOut =
       {
         m_profileTree = profile_tree;
         m_sequences = sequences;
-        m_sequence_count = ( ( sequence_count == 0 ) ? sequences->size() : min( sequence_count, sequences->size() ) );
+        m_sequence_count = ( ( sequence_count == 0 ) ? sequences->size() : min( (size_t &)sequence_count, sequences->size() ) );
         m_sequenceIndices = sequence_indices;
         m_profileProfileAlignments = profile_profile_alignments;
 
@@ -23721,13 +23721,13 @@ static dynamicprogramming_DeletionOut_subcell_tag const DeletionOut =
               AlignmentProfileAccessor<ResidueType, ProbabilityType, ScoreType, MatrixValueType> & prof
            )
            {
-              io::filtering_istream is;
-         	  galosh::input_comment_diversion_filter * icdf;
-         	  is.push(galosh::input_comment_diversion_filter());
+              static io::filtering_istream is;
+              galosh::input_comment_diversion_filter * icdf;
+              is.push(galosh::input_comment_diversion_filter());
               icdf = is.component<input_comment_diversion_filter>((int)(is.size()-1));
               is.push(normalStream);
 
-        	   /**
+              /**
                * Don't even begin if the input stream is at EOF or in a failed state.
                * Otherwise, clear the current vector and iterate through the stream.  Each
                * line is an <AlignmentProfilePosition> in square brackets.  It consists of

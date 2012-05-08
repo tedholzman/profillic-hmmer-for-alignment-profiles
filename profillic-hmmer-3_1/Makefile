@@ -121,7 +121,7 @@ profillic-hmmunifytransitions: $(PROFILLIC_HMMUNIFYTRANSITIONS_SOURCES) $(PROFIL
 profillic-hmmcopytransitions: $(PROFILLIC_HMMCOPYTRANSITIONS_SOURCES) $(PROFILLIC_HMMCOPYTRANSITIONS_INCS) $(PROFILLIC_HMMCOPYTRANSITIONS_OBJS) $(MUSCLE_CPPOBJ)
 	     $(CXX_LINK) -o profillic-hmmcopytransitions $(PROFILLIC_HMMCOPYTRANSITIONS_OBJS) $(MUSCLE_CPPOBJ) $(HMMER3_LIBS)
 
-all: profillic-hmmbuild profillic-hmmtoprofile profillic-hmmcalibrate profillic-hmmunifytransitions profillic-hmmcopytransitions
+all: profillic-hmmbuild profillic-hmmtoprofile profillic-hmmcalibrate profillic-hmmunifytransitions profillic-hmmcopytransitions profillic-alignment-hmmbuild
 
 ## Recompile if the includes are modified ...
 $(PROFILLIC_ALIGNMENT_HMMBUILD_OBJS): $(PROFILLIC_ALIGNMENT_HMMBUILD_SOURCES) $(PROFILLIC_ALIGNMENT_HMMBUILD_INCS) Makefile
