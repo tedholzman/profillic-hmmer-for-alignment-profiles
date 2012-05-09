@@ -158,7 +158,7 @@ profillic_p7_builder_Create(const ESL_GETOPTS *go, const ESL_ALPHABET *abc)
   /// NOTE: this is now redundant with the new --pnone and --plaplace arguments.  Remove these, after verifying that they're the same.
   if(esl_opt_GetBoolean(go, "--noprior") || esl_opt_GetBoolean(go, "--laplace")) {
     // NOTE: we need the prior to be initialized for the rest of the
-    // code to work.  A laplace prior (eg a dirichlet with all "1"s)
+    // code to work.  A Laplace prior (eg a dirichlet with all "1"s)
     // should have no effect in most cases.  See below in
     // profillic_parameterize(..) where we ask the caller to specify
     // whether a prior should be used or not for that step
@@ -950,31 +950,61 @@ profillic_p7_Profillicmodelmaker(P7_BUILDER *bld, ESL_MSA * msa, ProfileType con
        );
   }
 
-  // fromBegin
-  hmm->t[ 0 ][ p7H_MM ] =
-    toDouble(
-      ( 1 - hmm->t[ 0 ][ p7H_MI ] ) *
-      /// TAH 3/12 mod for using alignment profiles
-      /// Assuming this is indexed by profile_Begin_distribution
-      /// profile[ galosh::Transition::fromBegin ][ galosh::TransitionFromBegin::toMatch ]
-      profile[ 0 ][galosh::profile_Begin_distribution_tag()][ galosh::TransitionFromBegin::toMatch ]
-    );
-  hmm->t[ 0 ][ p7H_MD ] =
-    toDouble(
-      ( 1 - hmm->t[ 0 ][ p7H_MI ] ) *
-      /// TAH 3/12 mod for using alignment profiles
-      /// profile[ galosh::Transition::fromBegin ][ galosh::TransitionFromBegin::toDeletion ]
-      profile[ 0 ][galosh::profile_Begin_distribution_tag()][ galosh::TransitionFromBegin::toDeletion ]
-    );
 
   // ALWAYS TRUE, so need not be set:
   // Convention sets first elem to 1, rest to 0.
   hmm->mat[ 0 ][ 0 ] = 1.0;
   for( res_i = 1; res_i < hmm->abc->K; res_i++ ) {
     hmm->mat[ 0 ][ res_i ] = 0.0;
+
+  /*
+  // fromBegin
+  hmm->t[ 0 ][ p7H_MM ] =
+    toDouble(
+      //( 1 - hmm->t[ 0 ][ p7H_MI ] ) *
+      // TAH 3/12 mod for using alignment profiles
+      // Assuming this is indexed by profile_Begin_distribution
+      // profile[ galosh::Transition::fromBegin ][ galosh::TransitionFromBegin::toMatch ]
+      profile[ 0 ][galosh::profile_Begin_distribution_tag()][ galosh::TransitionFromBegin::toMatch ]
+    );
+
+  hmm->t[ 0 ][ p7H_MD ] =
+    toDouble(
+      // ( 1 - hmm->t[ 0 ][ p7H_MI ] ) *
+      // TAH 3/12 mod for using alignment profiles
+      // profile[ galosh::Transition::fromBegin ][ galosh::TransitionFromBegin::toDeletion ]
+      profile[ 0 ][ galosh::profile_Begin_distribution_tag()][ galosh::TransitionFromBegin::toDeletion ]
+    );
+*/
+//TAH 5/12 special cases
+  hmm->t[ 0 ][ p7H_II ] =
+     toDouble(
+        profile[ 0 ][ galosh::profile_PreAlign_distribution_tag()][ galosh::TransitionFromPreAlign::toPreAlign ]
+     );
+
+  hmm->t[ 0 ][ p7H_IM ] =
+     toDouble(
+        profile[ 0 ][ galosh::profile_PreAlign_distribution_tag()][ galosh::TransitionFromPreAlign::toBegin ]
+     );
+
+  hmm->t[ 0 ][ p7H_MI ] =
+	 toDouble(
+        profile[ 0 ][ galosh::profile_Match_distribution_tag()][ galosh::TransitionFromMatch::toInsertion ]
+     );
+
+  hmm->t[ 0 ][ p7H_MM ] =
+	 toDouble(
+        profile[ 0 ][ galosh::profile_Match_distribution_tag()][ galosh::TransitionFromMatch::toMatch ]
+     );
+
+  hmm->t[ 0 ][ p7H_MD ] =
+	 toDouble(
+        profile[ 0 ][ galosh::profile_Match_distribution_tag()][ galosh::TransitionFromMatch::toDeletion ]
+     );
+
   }
   /// \todo  TAH 4/12 have we taken care of position 0 in hmm matrix yet?
-  for( pos_i = 0; pos_i < profile.length(); pos_i++ ) {
+  for( pos_i = 1; pos_i < profile.length(); pos_i++ ) {
 
     /// \todo If this is too slow, memorize the ResidueType( res_i )s.
     for( res_i = 0; res_i < seqan::ValueSize<ResidueType>::VALUE; res_i++ ) {
@@ -1006,7 +1036,7 @@ profillic_p7_Profillicmodelmaker(P7_BUILDER *bld, ESL_MSA * msa, ProfileType con
  * distribution as assertions at every internal state.  In the case of alignment
  * profiles, the per-position insertion distributions should be used instead.
  * Unfortunately this can't be a final solution because we really should account
- * for the amount of information we have (ie some positions have no insertions
+ * for the amount of information we have (i.e. some positions have no insertions
  * -- ever -- so the insertion distribution is poorly informed, while others have
  * a lot of insertions).. I'll give that some thought.
  *

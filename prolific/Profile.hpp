@@ -537,7 +537,7 @@ const profile_PostAlign_emission_distribution_tag Emission::PostAlignInsertion =
     copyFrom ( MatchEmissionParameters<ResidueType, AnyProbabilityType> const& other_pos );
 
     /**
-     * Divide each contained distrubution value by denominator.  Note that
+     * Divide each contained distribution value by denominator.  Note that
      * this violates the rule that the probabilities sum to 1.
      */
     template <typename AnyProbabilityType>
