@@ -713,7 +713,7 @@ profillic_usual_master(const ESL_GETOPTS *go, struct cfg_s *cfg)
       /* Default matrix is stored in the --mx option, so it's always IsOn().
        * Check --mxfile first; then go to the --mx option and the default.
        */
-      if ( cfg->abc->type == eslAMINO && esl_opt_IsUsed(go, "--single")) {
+      if ( cfg->abc != NULL && cfg->abc->type == eslAMINO && esl_opt_IsUsed(go, "--single")) {
         if (esl_opt_IsOn(go, "--mxfile")) status = p7_builder_SetScoreSystem (info[i].bld, esl_opt_GetString(go, "--mxfile"), NULL, esl_opt_GetReal(go, "--popen"), esl_opt_GetReal(go, "--pextend"), info[i].bg);
         else                              status = p7_builder_LoadScoreSystem(info[i].bld, esl_opt_GetString(go, "--mx"),           esl_opt_GetReal(go, "--popen"), esl_opt_GetReal(go, "--pextend"), info[i].bg);
         if (status != eslOK) p7_Fail("Failed to set single query seq score system:\n%s\n", info[i].bld->errbuf);
@@ -753,10 +753,10 @@ profillic_usual_master(const ESL_GETOPTS *go, struct cfg_s *cfg)
   if ((( cfg->afp->format != eslMSAFILE_PROFILLIC )) && (ncpus > 0)) {
     thread_loop(threadObj, queue, cfg, go);
   } else if(cfg->fmt == eslMSAFILE_PROFILLIC) {  /// TAH 3/12 replace = with ==; make sure it works!
-    if( cfg->abc->type == eslDNA ) {
+    if( cfg->abc != NULL && cfg->abc->type == eslDNA ) {
       galosh::ProfileTreeRoot<seqan::Dna, floatrealspace> profile;
       profillic_serial_loop(info, cfg, &profile, go);
-    } else if( cfg->abc->type == eslAMINO ) {
+    } else if( cfg->abc != NULL && cfg->abc->type == eslAMINO ) {
       galosh::ProfileTreeRoot<seqan::AminoAcid20, floatrealspace> profile;
       profillic_serial_loop(info, cfg, &profile, go);
     } else {
@@ -1202,7 +1202,7 @@ profillic_serial_loop(WORKER_INFO *info, struct cfg_s *cfg, ProfileType * profil
 
 
       /*         bg   new-HMM trarr gm   om  */
-      if ( msa->nseq > 1 || cfg->abc->type != eslAMINO || !esl_opt_IsUsed(go, "--single")) {
+      if ( msa->nseq > 1 || (cfg->abc != NULL && cfg->abc->type != eslAMINO) || !esl_opt_IsUsed(go, "--single")) {
         if ((status = profillic_p7_Builder(info->bld, msa, profile_ptr, info->bg, &hmm, NULL, NULL, NULL, postmsa_ptr, info->use_priors)) != eslOK) p7_Fail("build failed: %s", bld->errbuf);
       } else {
         //for protein, single sequence, use blosum matrix:
@@ -1506,6 +1506,7 @@ set_msa_name(struct cfg_s *cfg, char *errbuf, ESL_MSA *msa)
   char *name = NULL;
   int   status;
 
+  assert(cfg != NULL && msa != NULL);
   if (cfg->do_mpi == FALSE && cfg->nali == 1) /* first (only?) HMM in file: */
     {
       if  (cfg->hmmName != NULL)

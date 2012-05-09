@@ -1203,21 +1203,12 @@ effective_seqnumber(P7_BUILDER *bld, const ESL_MSA *msa, P7_HMM *hmm, const P7_B
       double etarget; 
       double eff_nseq;
 
-      // TODO: REMOVE
-      cout << "SETTING EFFN_ENTROPY" << endl;
-      //cout << "hacking hmm->nseq = 1000" << endl;
-      //hmm->nseq = 1000;
-
       etarget = (bld->esigma - eslCONST_LOG2R * log( 2.0 / ((double) hmm->M * (double) (hmm->M+1)))) / (double) hmm->M; /* xref J5/36. */
-      // TODO: REMOVE
-      cout << "nominal etarget is " << etarget << "; bld->re_target is " << bld->re_target << endl;
       etarget = ESL_MAX(bld->re_target, etarget);
 
       status = p7_EntropyWeight(hmm, bg, bld->prior, etarget, &eff_nseq);
       if      (status == eslEMEM) ESL_XFAIL(status, bld->errbuf, "memory allocation failed");
       else if (status != eslOK)   ESL_XFAIL(status, bld->errbuf, "internal failure in entropy weighting algorithm");
-      // TODO: REMOVE
-      cout << "calculated eff_nseq is " << eff_nseq << endl;
       hmm->eff_nseq = eff_nseq;
     }
     

@@ -957,46 +957,28 @@ profillic_p7_Profillicmodelmaker(P7_BUILDER *bld, ESL_MSA * msa, ProfileType con
   for( res_i = 1; res_i < hmm->abc->K; res_i++ ) {
     hmm->mat[ 0 ][ res_i ] = 0.0;
 
-  /*
-  // fromBegin
-  hmm->t[ 0 ][ p7H_MM ] =
-    toDouble(
-      //( 1 - hmm->t[ 0 ][ p7H_MI ] ) *
-      // TAH 3/12 mod for using alignment profiles
-      // Assuming this is indexed by profile_Begin_distribution
-      // profile[ galosh::Transition::fromBegin ][ galosh::TransitionFromBegin::toMatch ]
-      profile[ 0 ][galosh::profile_Begin_distribution_tag()][ galosh::TransitionFromBegin::toMatch ]
-    );
-
-  hmm->t[ 0 ][ p7H_MD ] =
-    toDouble(
-      // ( 1 - hmm->t[ 0 ][ p7H_MI ] ) *
-      // TAH 3/12 mod for using alignment profiles
-      // profile[ galosh::Transition::fromBegin ][ galosh::TransitionFromBegin::toDeletion ]
-      profile[ 0 ][ galosh::profile_Begin_distribution_tag()][ galosh::TransitionFromBegin::toDeletion ]
-    );
-*/
-//TAH 5/12 special cases
+  /// TAH 5/12 special cases for 0th element
+  ///  Profile N->N is HMM I->I
   hmm->t[ 0 ][ p7H_II ] =
      toDouble(
         profile[ 0 ][ galosh::profile_PreAlign_distribution_tag()][ galosh::TransitionFromPreAlign::toPreAlign ]
      );
-
+  /// Profile N->B is HMM I->M
   hmm->t[ 0 ][ p7H_IM ] =
      toDouble(
         profile[ 0 ][ galosh::profile_PreAlign_distribution_tag()][ galosh::TransitionFromPreAlign::toBegin ]
      );
-
+  /// Profile B->I is HMM M->I
   hmm->t[ 0 ][ p7H_MI ] =
 	 toDouble(
         profile[ 0 ][ galosh::profile_Match_distribution_tag()][ galosh::TransitionFromMatch::toInsertion ]
      );
-
+  /// Profile B->M is HMM M->M
   hmm->t[ 0 ][ p7H_MM ] =
 	 toDouble(
         profile[ 0 ][ galosh::profile_Match_distribution_tag()][ galosh::TransitionFromMatch::toMatch ]
      );
-
+  /// Profile B->D is HMM M->D
   hmm->t[ 0 ][ p7H_MD ] =
 	 toDouble(
         profile[ 0 ][ galosh::profile_Match_distribution_tag()][ galosh::TransitionFromMatch::toDeletion ]
@@ -1053,25 +1035,27 @@ profillic_p7_Profillicmodelmaker(P7_BUILDER *bld, ESL_MSA * msa, ProfileType con
           );
       } // End if this is the last position (use post-align insertions) .. else ..
     } // End foreach res_i
+
+    /// TAH 3/12 Last position special cases
     if( pos_i == ( profile.length() - 1 ) ) {
       // Use post-align insertions
       hmm->t[ pos_i /*+ 1*/ ][ p7H_IM ] =
          toDouble(
         	     /// TAH 3/12 mod for using alignment profiles
-        		 ///profile[ galosh::Transition::fromPostAlign ][ galosh::TransitionFromPostAlign::toTerminal ]
+        		 //profile[ galosh::Transition::fromPostAlign ][ galosh::TransitionFromPostAlign::toTerminal ]
         		 profile[ pos_i ][galosh::profile_PostAlign_distribution_tag()][ galosh::TransitionFromPostAlign::toTerminal ]
          );
       hmm->t[ pos_i /*+ 1*/ ][ p7H_II ] =
          toDouble(
         	    /// TAH 3/12 mod for using alignment profiles
-        		/// profile[ galosh::Transition::fromPostAlign ][ galosh::TransitionFromPostAlign::toPostAlign ]
+        		// profile[ galosh::Transition::fromPostAlign ][ galosh::TransitionFromPostAlign::toPostAlign ]
         		 profile[ pos_i ][galosh::profile_PostAlign_distribution_tag()][ galosh::TransitionFromPostAlign::toPostAlign ]
          );
 
       hmm->t[ pos_i /*+ 1*/ ][ p7H_MM ] = //hmm->t[ pos_i + 1 ][ p7H_IM ];
         toDouble(
        	  /// TAH 3/12 mod for using alignment profiles
-          /// profile[ galosh::Transition::fromPostAlign ][ galosh::TransitionFromPostAlign::toTerminal ]
+          // profile[ galosh::Transition::fromPostAlign ][ galosh::TransitionFromPostAlign::toTerminal ]
           profile[ pos_i ][galosh::profile_PostAlign_distribution_tag()][ galosh::TransitionFromPostAlign::toTerminal ]
         );
       hmm->t[ pos_i /*+ 1*/ ][ p7H_MI ] = //1.0 - hmm->t[ pos_i + 1 ][ p7H_MM ];
@@ -1086,7 +1070,7 @@ profillic_p7_Profillicmodelmaker(P7_BUILDER *bld, ESL_MSA * msa, ProfileType con
       //hmm->t[ pos_i + 1 ][ p7H_MD ] = 0;
       //hmm->t[ pos_i + 1 ][ p7H_DD ] = 0;
 
-    } else {  // if this is the last position (use post-align insertions) .. else ..
+    } else {  // normal (not last position) code
       hmm->t[ pos_i /*+ 1*/ ][ p7H_MM ] =
         toDouble(
         	  /// TAH 3/12 mod for using alignment profiles
@@ -1134,7 +1118,6 @@ profillic_p7_Profillicmodelmaker(P7_BUILDER *bld, ESL_MSA * msa, ProfileType con
     } // End if this is the last position (use post-align insertions) .. else ..
   } // End foreach pos_i
 
-  /// \todo Make nseq / eff_nseq somehow inputs!
   hmm->nseq     = msa->nseq;
   hmm->eff_nseq = msa->nseq;
 
@@ -1302,21 +1285,13 @@ effective_seqnumber(P7_BUILDER *bld, const ESL_MSA *msa, P7_HMM *hmm, const P7_B
       double etarget; 
       double eff_nseq;
 
-      /// \todo REMOVE/repair
-      cout << "SETTING EFFN_ENTROPY" << endl;
-      //cout << "hacking hmm->nseq = 10" << endl;
-      //hmm->nseq = 10;
-
       etarget = (bld->esigma - eslCONST_LOG2R * log( 2.0 / ((double) hmm->M * (double) (hmm->M+1)))) / (double) hmm->M; /* xref J5/36. */
-      /// \todo REMOVE
-      cout << "nominal etarget is " << etarget << "; bld->re_target is " << bld->re_target << endl;
       etarget = ESL_MAX(bld->re_target, etarget);
 
       status = p7_EntropyWeight(hmm, bg, bld->prior, etarget, &eff_nseq);
       if      (status == eslEMEM) ESL_XFAIL(status, bld->errbuf, "memory allocation failed");
       else if (status != eslOK)   ESL_XFAIL(status, bld->errbuf, "internal failure in entropy weighting algorithm");
-      /// \todo REMOVE
-      cout << "calculated eff_nseq is " << eff_nseq << endl;
+      /// \todo Is the effective n_seq being calculated correctly in alignment profiles?
       hmm->eff_nseq = eff_nseq;
     }
     
