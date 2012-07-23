@@ -61,7 +61,7 @@ template <typename ProfileType>
 static int
 profillic_esl_msafile_profile_Read(ESLX_MSAFILE *afp, ESL_MSA **ret_msa, ProfileType * profile_ptr );
 
-/////////////// End profillic-hmmer //////////////////////////////////
+/* /////////////// End profillic-hmmer ////////////////////////////////// */
 
 
 /*****************************************************************
@@ -501,6 +501,7 @@ profillic_esl_alignment_profile_Read(ESLX_MSAFILE *afp, ESL_MSA **ret_msa, Profi
 
   // Read in the galosh alignment profile (from profuse)
   profile_ptr->fromFile(afp->bf->filename,*profile_ptr);
+  //profile_ptr->normalize(1E-5); //TAH 7/12 experimental mod for Robert Hubley
   // Construct the consensus sequence.
   // It is the "most likely" character at every position.
   // At this point it is a galosh Sequence (and a seqan sequence)

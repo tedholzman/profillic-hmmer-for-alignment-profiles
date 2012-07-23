@@ -39,7 +39,7 @@ extern "C" {
 #endif
 }
 
-/////////////// For profillic-hmmer //////////////////////////////////
+/* /////////////// For profillic-hmmer ////////////////////////////////// */
 #include "profillic-hmmer.hpp"
 extern "C" {
 #include "esl_msa.h"
@@ -59,7 +59,7 @@ template <typename ProfileType>
 static int
 profillic_esl_msafile_profile_Read(ESLX_MSAFILE *afp, ESL_MSA **ret_msa, ProfileType * profile_ptr );
 
-/////////////// End profillic-hmmer //////////////////////////////////
+/* /////////////// End profillic-hmmer ////////////////////////////////// */
 
 
 /*****************************************************************
@@ -331,7 +331,7 @@ profillic_msafile_OpenBuffer(ESL_ALPHABET **byp_abc, ESL_BUFFER *bf, int format,
   case eslMSAFILE_PSIBLAST:     status = esl_msafile_psiblast_SetInmap( afp); break;
   case eslMSAFILE_SELEX:        status = esl_msafile_selex_SetInmap(    afp); break;
   case eslMSAFILE_STOCKHOLM:    status = esl_msafile_stockholm_SetInmap(afp); break;
-  case eslMSAFILE_PROFILLIC:    status = eslOK; /// \todo status = profillic_esl_msafile_profile_SetInmap(afp); */ break;
+  case eslMSAFILE_PROFILLIC:    status = eslOK;                               break; /// \todo status = profillic_esl_msafile_profile_SetInmap(afp); */ break;
   default: ESL_XEXCEPTION(eslENOFORMAT, "no such alignment file format");     break;
   }
 

@@ -120,7 +120,7 @@ extern "C" {
 #include "hmmer.h"
 }
 
-/////////////// For profillic-hmmer //////////////////////////////////
+/* /////////////// For profillic-hmmer ////////////////////////////////// */
 #include "profillic-hmmer.hpp"
 #include "DynamicProgramming.hpp"
 #include "profillic-alignment-p7_builder.hpp"
@@ -764,7 +764,7 @@ profillic_usual_master(const ESL_GETOPTS *go, struct cfg_s *cfg)
       //galosh::ProfileTreeRoot<seqan::Dna, floatrealspace> profile;
       //TAH 2/12 for conversion to Alignment Profile.
       profillic_serial_loop(info, cfg, &profile, go);
-    } else if( cfg->abc->type == eslAMINO ) {
+    } else if( cfg->abc != NULL && cfg->abc->type == eslAMINO ) {
       //galosh::ProfileTreeRoot<seqan::AminoAcid20, floatrealspace> profile;
       //TAH 2/12 for conversion to Alignment Profile
       galosh::AlignmentProfileAccessor<seqan::AminoAcid20, floatrealspace, floatrealspace, floatrealspace> profile(cfg->nseq);
