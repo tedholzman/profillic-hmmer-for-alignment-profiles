@@ -473,7 +473,7 @@ profillic_eslx_msafile_Read(ESLX_MSAFILE *afp, ESL_MSA **ret_msa, ProfileType * 
  */
 template <typename ProfileType>
 static int
-profillic_esl_alignment_profile_Read(ESLX_MSAFILE *afp, ESL_MSA **ret_msa, ProfileType * profile_ptr )
+profillic_esl_alignment_profile_Read (ESLX_MSAFILE *afp, ESL_MSA **ret_msa, ProfileType * profile_ptr )
 {
 
   /// \note modifying to use boost io functions, to read "#" comment lines and extract key/val pairs from the comments
@@ -597,7 +597,7 @@ profillic_esl_alignment_profile_Read(ESLX_MSAFILE *afp, ESL_MSA **ret_msa, Profi
   if (msa != NULL)      esl_msa_Destroy(msa);
   if (ret_msa != NULL) *ret_msa = NULL;
   return status;
-}
+} // profillic_esl_alignment_profile_Read (..)
 
 /*---------------------- end, galosh profile format (from profillic)-------*/
 
