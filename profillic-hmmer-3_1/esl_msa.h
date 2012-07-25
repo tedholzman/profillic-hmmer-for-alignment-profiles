@@ -64,6 +64,7 @@ typedef struct {
   char  *sa_cons;   /* consensus surface access, or NULL; [0..alen-1], even in digital mode */
   char  *pp_cons;   /* consensus posterior prob, or NULL; [0..alen-1], even in digital mode */
   char  *rf;        /* reference coord system, or NULL;   [0..alen-1], even in digital mode */
+  char  *mm;        /* model mask, or NULL;   [0..alen-1], even in digital mode             */
   char **sqacc;     /* accession numbers for sequences i                                    */
   char **sqdesc;    /* description lines for sequences i                                    */
   char **ss;        /* per-seq secondary structures, or NULL                                */
@@ -107,9 +108,9 @@ typedef struct {
   char  **gc;                   /* [0..ngc-1][0..alen-1] markup         */
   int     ngc;                  /* number of #=GC tag types             */
 
-  char  **gr_tag;               /* markup tags for unparsed #=GR lines   */
-  char ***gr;                   /* [0..ngr][0..nseq-1][0..alen-1] markup */
-  int     ngr;			/* number of #=GR tag types              */
+  char  **gr_tag;               /* markup tags for unparsed #=GR lines     */
+  char ***gr;                   /* [0..ngr-1][0..nseq-1][0..alen-1] markup */
+  int     ngr;			/* number of #=GR tag types                */
 
   /* Optional augmentation w/ keyhashes. 
    * This can significantly speed up parsing of large alignments
@@ -190,6 +191,9 @@ extern int esl_msa_Checksum(const ESL_MSA *msa, uint32_t *ret_checksum);
 
 extern int esl_msa_RemoveBrokenBasepairsFromSS(char *ss, char *errbuf, int len, const int *useme);
 extern int esl_msa_RemoveBrokenBasepairs(ESL_MSA *msa, char *errbuf, const int *useme);
+#ifdef eslAUGMENT_KEYHASH
+extern int esl_msa_Hash(ESL_MSA *msa);
+#endif
 
 /* 5. Debugging, testing, development */
 extern int      esl_msa_Validate(const ESL_MSA *msa, char *errmsg);
@@ -204,5 +208,5 @@ extern int      esl_msa_CompareOptional (ESL_MSA *a1, ESL_MSA *a2);
  * @LICENSE@
  * 
  * SVN $URL$
- * SVN $Id: esl_msa.h 715 2011-08-03 21:04:24Z eddys $
+ * SVN $Id: esl_msa.h 762 2012-05-11 21:01:15Z eddys $
  *****************************************************************/

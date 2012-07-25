@@ -500,15 +500,16 @@ profillic_esl_alignment_profile_Read(ESLX_MSAFILE *afp, ESL_MSA **ret_msa, Profi
   afp->errmsg[0] = '\0';
 
   // Read in the galosh alignment profile (from profuse)
-  profile_ptr->fromFile(afp->bf->filename,*profile_ptr);
-  //profile_ptr->normalize(1E-5); //TAH 7/12 experimental mod for Robert Hubley
+  profile_ptr->fromFile( afp->bf->filename, *profile_ptr );
+  profile_ptr->normalize( 1E-5 ); //TAH 7/12 experimental mod for Robert Hubley
   // Construct the consensus sequence.
   // It is the "most likely" character at every position.
   // At this point it is a galosh Sequence (and a seqan sequence)
-  profile_length = profile_ptr->length();
+  // The alignment profile has an extra position...
+  profile_length = profile_ptr->length() - 1;
   consensus_sequence.reinitialize( profile_length );
-  for( pos_i = 0; pos_i < profile_length; pos_i++ ) {
-    consensus_sequence[ pos_i ] =
+  for( pos_i = 1; pos_i < profile_length; pos_i++ ) {
+    consensus_sequence[ pos_i - 1 ] =
       ( *profile_ptr )[ pos_i ][ galosh::Emission::Match ].maximumValueType();
   }
 
@@ -516,7 +517,17 @@ profillic_esl_alignment_profile_Read(ESLX_MSAFILE *afp, ESL_MSA **ret_msa, Profi
 
   /* Allocate a growable MSA, and auxiliary parse data coupled to the MSA allocation */
 #ifdef eslAUGMENT_ALPHABET
-  if (afp->abc   &&  (msa = esl_msa_CreateDigital(afp->abc, 16, -1)) == NULL) { status = eslEMEM; goto ERROR; }
+  if( afp->abc ) {
+    msa = esl_msa_CreateDigital( afp->abc, 16, -1 );
+    if( msa == NULL) {
+      status = eslEMEM;
+      goto ERROR;
+    }
+    // \note If we run into this problem (that the msa gets corrupted upon return from esl_msa_CreateDigital), check that the local copy of esl_msa.h is up-to-date.  That was the source of the problem the last time this happened; something to do with the struct defs being out-of-sync.
+    if( msa->sqalloc == 0 ) {
+      ESL_EXCEPTION(eslEINCONCEIVABLE, "sqalloc is 0 after allocating it with 16!  If we run into this problem, check that the local copy of esl_msa.h is up-to-date.  That was the source of the problem the last time this happened; something to do with the struct defs being out-of-sync.");
+    }
+  }
 #endif
   if (! afp->abc &&  (msa = esl_msa_Create(                 16, -1)) == NULL) { status = eslEMEM; goto ERROR; }
 
@@ -526,8 +537,13 @@ profillic_esl_alignment_profile_Read(ESLX_MSAFILE *afp, ESL_MSA **ret_msa, Profi
 
   /* if necessary, make room for the new seq */
   // TAH 3/12
+  if( profile_ptr->orig_nseq() > 0 ) {
+    msa->nseq = profile_ptr->orig_nseq();
+  } else {
+    msa->nseq = 1;
+  }
+  // TODO: Is this necessary? We really need only the 1...
   if (msa->nseq >= msa->sqalloc && (status = esl_msa_Expand(msa)) != eslOK) return status;
-  if(profile_ptr->orig_nseq() > 0) msa->nseq = profile_ptr->orig_nseq();
   // TAH 4/12 Although the original number of sequences may be anything, the msa only has 1 element
   seqidx = 0; // 0
   //msa->nseq++; // = 1
