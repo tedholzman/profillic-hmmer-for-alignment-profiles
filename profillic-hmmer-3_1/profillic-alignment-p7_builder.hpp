@@ -886,7 +886,7 @@ relative_weights(P7_BUILDER *bld, ESL_MSA *msa)
  */
 template <typename ProfileType>
 static int
-profillic_p7_Profillicmodelmaker(P7_BUILDER *bld, ESL_MSA * msa, ProfileType const & profile, P7_HMM **ret_hmm)
+profillic_p7_Profillicmodelmaker (P7_BUILDER *bld, ESL_MSA * msa, ProfileType const & profile, P7_HMM **ret_hmm)
 {
 // TAH 2/12 for conversion to AlignmentProfile
 //  typedef typename galosh::profile_traits<ProfileType>::ResidueType ResidueType;
@@ -1134,6 +1134,10 @@ profillic_p7_Profillicmodelmaker(P7_BUILDER *bld, ESL_MSA * msa, ProfileType con
   for (apos = 1; apos <= msa->alen; apos++)
     msa->rf[apos-1] = 'x';
   msa->rf[msa->alen] = '\0';
+
+  // It's supposed to be a "Counts model", which I believe means that we need to do this: (indeed, without it, the effective sequence number calc doesn't seem to work).
+  // This scales each position's distributions up so that they sum to nseq..
+  p7_hmm_Scale( hmm, hmm->nseq );
 
   *ret_hmm = hmm;
   return eslOK;
