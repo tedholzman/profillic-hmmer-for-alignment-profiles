@@ -40,10 +40,12 @@ extern "C" {
 }
 
 /* ////////////// For profillic-hmmer ///////////////////////////////// */
+#define new _new
 #include "profillic-hmmer.hpp"
 extern "C" {
 #include "esl_msa.h"
 }
+#undef new
 #define eslMSAFILE_PROFILLIC       98103  /* A galosh profile (from profillic)   */
 //TAH 3/12 this doesn't do what the original programmer intended.  And it fails under linux.
 // ## only concatenates macro arguments
@@ -523,7 +525,7 @@ profillic_esl_alignment_profile_Read (ESLX_MSAFILE *afp, ESL_MSA **ret_msa, Prof
       status = eslEMEM;
       goto ERROR;
     }
-    // \note If we run into this problem (that the msa gets corrupted upon return from esl_msa_CreateDigital), check that the local copy of esl_msa.h is up-to-date.  That was the source of the problem the last time this happened; something to do with the struct defs being out-of-sync.
+    /// \note If we run into this problem (that the msa gets corrupted upon return from esl_msa_CreateDigital), check that the local copy of esl_msa.h is up-to-date.  That was the source of the problem the last time this happened; something to do with the struct defs being out-of-sync.
     if( msa->sqalloc == 0 ) {
       ESL_EXCEPTION(eslEINCONCEIVABLE, "sqalloc is 0 after allocating it with 16!  If we run into this problem, check that the local copy of esl_msa.h is up-to-date.  That was the source of the problem the last time this happened; something to do with the struct defs being out-of-sync.");
     }

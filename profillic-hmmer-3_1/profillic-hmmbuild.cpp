@@ -98,7 +98,10 @@ extern "C" {
 #include "esl_alphabet.h"
 #include "esl_getopts.h"
 #include "esl_mpi.h"
+  /// \note TAH 8/12 Workaround for C++ keyword "new" in esl_msa.h
+#define new _new
 #include "esl_msa.h"
+#undef new
 #include "esl_msafile.h"
 #include "esl_msaweight.h"
 #include "esl_msacluster.h"

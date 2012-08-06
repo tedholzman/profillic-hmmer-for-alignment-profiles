@@ -40,10 +40,13 @@ extern "C" {
 }
 
 /* /////////////// For profillic-hmmer ////////////////////////////////// */
+/// \note TAH 8/12 Avoid the C++ keyword "new" in esl_msa.h
+#define new _new
 #include "profillic-hmmer.hpp"
 extern "C" {
 #include "esl_msa.h"
 }
+#undef new
 #define eslMSAFILE_PROFILLIC       98103  /* A galosh profile (from profillic)   */
 #define PRId64 "d"
 

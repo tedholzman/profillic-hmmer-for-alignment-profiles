@@ -31,8 +31,10 @@ extern "C" {
 #include "easel.h"
 #include "esl_getopts.h"
 #include "esl_vectorops.h"
-
+  /// \note TAH 8/12 Workaround to avoid use of C++ keyword "new" in esl_msa.h
+#define new _new
 #include "hmmer.h"
+#undef new
 }
 
 /* ////////////// For profillic-hmmer ////////////////////////////////// */
