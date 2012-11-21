@@ -25,6 +25,7 @@ extern "C" {
 #include "easel.h"
 #include "esl_alphabet.h"
 #include "esl_dmatrix.h"
+#include "esl_fileparser.h"
 #include "esl_getopts.h"
 /// \note TAH 8/12 workaround to avoid c++ keyword "new" in esl_msa.h
 #define new _new
@@ -35,8 +36,22 @@ extern "C" {
 #include "esl_random.h"
 #include "esl_vectorops.h"
 
-#include "hmmer.h"
-}
+#include "base/p7_bg.h"
+#include "base/p7_hmm.h"
+#include "base/p7_profile.h"
+#include "base/p7_trace.h"
+
+#include "build/p7_builder.h"
+#include "build/build.h"
+#include "build/evalues.h"
+#include "build/eweight.h"
+#include "build/seqmodel.h"
+
+#include "dp_vector/p7_oprofile.h"
+
+#include "misc/tracealign.h"
+
+} // End if( extern "C" )
 
 /* ////////////// For profillic-hmmer ////////////////////////////////// */
 /// Stuff we needed to modify in order to compile it in c++:
@@ -124,6 +139,8 @@ profillic_p7_builder_Create(const ESL_GETOPTS *go, const ESL_ALPHABET *abc)
 
       seed = esl_opt_GetInteger(go, "--seed");
     }
+
+  bld->max_insert_len = 0;
 
   /* The default RE target is alphabet dependent. */
   if (go != NULL &&  esl_opt_IsOn (go, "--ere")) 
@@ -235,7 +252,6 @@ profillic_p7_builder_LoadScoreSystem(P7_BUILDER *bld, const char *matrix, double
 {
   double  *f = NULL;
   double   slambda;
-  int      a,b;
   int      status;
 
   bld->errbuf[0] = '\0';
@@ -262,14 +278,7 @@ profillic_p7_builder_LoadScoreSystem(P7_BUILDER *bld, const char *matrix, double
   else if (status != eslOK)      ESL_XFAIL(eslEINVAL, bld->errbuf, "unexpected error in solving score matrix %s for probability parameters", matrix);
 
   /* Convert joint probabilities P(ab) to conditionals P(b|a) */
-  for (a = 0; a < bld->abc->K; a++)
-    for (b = 0; b < bld->abc->K; b++)
-      bld->Q->mx[a][b] /= f[a];	/* Q->mx[a][b] is now P(b | a) */
-
-  /* Normalize mx, so the values P(b|a) for row a sum to 1 */
-  for (a = 0; a < bld->abc->K; a++)
-    esl_vec_DNorm(bld->Q->mx[a],  bld->abc->K);
-
+  esl_scorematrix_JointToConditionalOnQuery(bld->abc, bld->Q);
 
   bld->popen   = popen;
   bld->pextend = pextend;
@@ -334,7 +343,6 @@ profillic_p7_builder_SetScoreSystem(P7_BUILDER *bld, const char *mxfile, const c
   ESL_FILEPARSER  *efp = NULL;
   double          *f   = NULL;
   double           slambda;
-  int              a,b;
   int              status;
 
   bld->errbuf[0] = '\0';
@@ -367,15 +375,8 @@ profillic_p7_builder_SetScoreSystem(P7_BUILDER *bld, const char *mxfile, const c
   else if (status == eslENOHALT) ESL_XFAIL(eslEINVAL, bld->errbuf, "failed to solve input score matrix %s for lambda: are you sure it's valid?", mxfile);
   else if (status != eslOK)      ESL_XFAIL(eslEINVAL, bld->errbuf, "unexpected error in solving input score matrix %s for probability parameters", mxfile);
 
-  /* Convert joint probs P(ab) to conditionals P(b | a) */
-  for (a = 0; a < bld->abc->K; a++)
-    for (b = 0; b < bld->abc->K; b++)
-      bld->Q->mx[a][b] /= f[a];	/* Q->mx[a][b] is now P(b | a) */
-
-  /* Normalize mx, so the values P(b|a) for row a sum to 1 */
-  for (a = 0; a < bld->abc->K; a++)
-    esl_vec_DNorm(bld->Q->mx[a],  bld->abc->K);
-
+  /* Convert joint probabilities P(ab) to conditionals P(b|a) */
+  esl_scorematrix_JointToConditionalOnQuery(bld->abc, bld->Q);
 
   bld->popen   = popen;
   bld->pextend = pextend;
@@ -477,6 +478,7 @@ profillic_p7_Builder(P7_BUILDER *bld, ESL_MSA *msa, ProfileType const * const pr
 	   P7_HMM **opt_hmm, P7_TRACE ***opt_trarr, P7_PROFILE **opt_gm, P7_OPROFILE **opt_om,
                      ESL_MSA **opt_postmsa, int const use_priors)
 {
+  int i,j;
   uint32_t    checksum = 0;	/* checksum calculated for the input MSA. hmmalign --mapali verifies against this. */
   P7_HMM     *hmm      = NULL;
   P7_TRACE  **tr       = NULL;
@@ -503,11 +505,23 @@ profillic_p7_Builder(P7_BUILDER *bld, ESL_MSA *msa, ProfileType const * const pr
   //if ((status =  esl_msa_MarkFragments(msa, bld->fragthresh))           != eslOK) goto ERROR;
 
   if ((status =  profillic_build_model          (bld, msa, profile_ptr, &hmm, tr_ptr))         != eslOK) goto ERROR;
+
+  //Ensures that the weighted-average I->I count <=  bld->max_insert_len
+  if (bld->max_insert_len>0)
+    for (i=1; i<hmm->M; i++ )   hmm->t[i][p7H_II] = ESL_MIN(hmm->t[i][p7H_II], bld->max_insert_len*hmm->t[i][p7H_MI]);
+
   if ((status =  effective_seqnumber  (bld, msa, hmm, bg))              != eslOK) goto ERROR;
   if ((status =  profillic_parameterize (bld, hmm, use_priors))          != eslOK) goto ERROR;
   if ((status =  annotate             (bld, msa, hmm))                  != eslOK) goto ERROR;
   if ((status =  calibrate            (bld, hmm, bg, opt_gm, opt_om))   != eslOK) goto ERROR;
   if ((status =  make_post_msa        (bld, msa, hmm, tr, opt_postmsa)) != eslOK) goto ERROR;
+
+  //force masked positions to background  (it'll be close already, so no relevant impact on weighting)
+  if (hmm->mm != NULL)
+    for (i=1; i<hmm->M; i++ )
+      if (hmm->mm[i] == 'm')
+        for (j=0; j<hmm->abc->K; j++)
+          hmm->mat[i][j] = bg->f[j];
 
   if ( bld->abc->type == eslDNA ||  bld->abc->type == eslRNA ) {
 	  if (bld->w_len > 0)           hmm->max_length = bld->w_len;
@@ -573,14 +587,19 @@ profillic_p7_SingleBuilder(P7_BUILDER *bld, ESL_SQ *sq, P7_BG *bg, P7_HMM **opt_
   if ((status = p7_hmm_SetConsensus(hmm, sq))                                                                   != eslOK) goto ERROR; 
   if ((status = calibrate(bld, hmm, bg, opt_gm, opt_om))                                                        != eslOK) goto ERROR;
 
-  /* build a faux trace: relative to core model (B->M_1..M_L->E) */
+  /* build a faux glocal trace */
   if (opt_tr != NULL) 
     {
       if ((tr = p7_trace_Create())                      == NULL)  goto ERROR;
+      if ((status = p7_trace_Append(tr, p7T_S, 0, 0))   != eslOK) goto ERROR; 
+      if ((status = p7_trace_Append(tr, p7T_N, 0, 0))   != eslOK) goto ERROR; 
       if ((status = p7_trace_Append(tr, p7T_B, 0, 0))   != eslOK) goto ERROR; 
+      if ((status = p7_trace_Append(tr, p7T_G, 0, 0))   != eslOK) goto ERROR; 
       for (k = 1; k <= sq->n; k++)
-        if ((status = p7_trace_Append(tr, p7T_M, k, k)) != eslOK) goto ERROR;
+	if ((status = p7_trace_Append(tr, p7T_MG, k, k))!= eslOK) goto ERROR;
       if ((status = p7_trace_Append(tr, p7T_E, 0, 0))   != eslOK) goto ERROR; 
+      if ((status = p7_trace_Append(tr, p7T_C, 0, 0))   != eslOK) goto ERROR; 
+      if ((status = p7_trace_Append(tr, p7T_T, 0, 0))   != eslOK) goto ERROR; 
       tr->M = sq->n;
       tr->L = sq->n;
     }
@@ -881,7 +900,7 @@ relative_weights(P7_BUILDER *bld, ESL_MSA *msa)
 
 /**
  * <pre> 
- * build_model():
+ * profillic_p7_Profillicmodelmaker():
  * Given <msa>, choose HMM architecture, collect counts;
  * upon return, <*ret_hmm> is newly allocated and contains
  * relative-weighted observed counts.
@@ -1171,14 +1190,14 @@ profillic_build_model(P7_BUILDER *bld, ESL_MSA *msa, ProfileType const * const p
   } else
   if      (bld->arch_strategy == p7_ARCH_FAST)
     {
-      status = p7_Fastmodelmaker(msa, bld->symfrac, bld, ret_hmm, opt_tr);
+      status = p7_Fastmodelmaker( msa, bld->symfrac, bld, ret_hmm, opt_tr);
       if      (status == eslENORESULT) ESL_XFAIL(status, bld->errbuf, "Alignment %s has no consensus columns w/ > %d%% residues - can't build a model.\n", msa->name != NULL ? msa->name : "", (int) (100 * bld->symfrac));
       else if (status == eslEMEM)      ESL_XFAIL(status, bld->errbuf, "Memory allocation failure in model construction.\n");
       else if (status != eslOK)        ESL_XFAIL(status, bld->errbuf, "internal error in model construction.\n");      
     }
   else if (bld->arch_strategy == p7_ARCH_HAND)
     {
-      status = p7_Handmodelmaker(msa, bld, ret_hmm, opt_tr);
+      status = p7_Handmodelmaker( msa, bld, ret_hmm, opt_tr);
       if      (status == eslENORESULT) ESL_XFAIL(status, bld->errbuf, "Alignment %s has no annotated consensus columns - can't build a model.\n", msa->name != NULL ? msa->name : "");
       else if (status == eslEFORMAT)   ESL_XFAIL(status, bld->errbuf, "Alignment %s has no reference annotation line\n", msa->name != NULL ? msa->name : "");            
       else if (status == eslEMEM)      ESL_XFAIL(status, bld->errbuf, "Memory allocation failure in model construction.\n");
@@ -1444,7 +1463,7 @@ static int
 make_post_msa(P7_BUILDER *bld, const ESL_MSA *premsa, const P7_HMM *hmm, P7_TRACE **tr, ESL_MSA **opt_postmsa)
 {
   ESL_MSA  *postmsa  = NULL;
-  int       optflags = p7_DEFAULT;
+  int       optflags = p7_ALL_CONSENSUS_COLS;
   int       status;
 
   if (opt_postmsa == NULL) return eslOK;
@@ -1469,6 +1488,6 @@ make_post_msa(P7_BUILDER *bld, const ESL_MSA *premsa, const P7_HMM *hmm, P7_TRAC
 /*****************************************************************
  * @LICENSE@
  *
- * SVN $Id: p7_builder.c 3835 2012-02-04 22:27:55Z eddys $
- * SVN $URL: https://svn.janelia.org/eddylab/eddys/src/hmmer/trunk/src/p7_builder.c $
+ * SVN $Id: p7_builder.c 4281 2012-11-01 14:22:08Z eddys $
+ * SVN $URL: https://svn.janelia.org/eddylab/eddys/src/hmmer/trunk/src/build/p7_builder.c $
  *****************************************************************/

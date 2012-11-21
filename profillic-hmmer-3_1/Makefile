@@ -17,7 +17,7 @@ CFLAGS		= -g3 -gdwarf-2 -w
 
 #========================================
 ### For Seqan support (required):
-SEQAN_CFLAGS 	= -I./seqan
+SEQAN_CFLAGS 	= -I./seqan-trunk/core/include
 SEQAN_LDFLAGS 	=
 SEQAN_LIBS	=
 
@@ -42,8 +42,8 @@ BOOST_LIBS	= -lboost_serialization -lboost_graph -lboost_filesystem -lboost_syst
 
 #========================================
 ### Paul added these for HMMER 3.1 (and easel) support (required):
-HMMER3_CFLAGS 	= -I. -I./hmmer-3.1/src -I./hmmer-3.1/easel
-HMMER3_LDFLAGS 	= -L./hmmer-3.1/src -L./hmmer-3.1/easel -L./hmmer-3.1/src/impl
+HMMER3_CFLAGS 	= -I. -I./hmmer/src -I./hmmer/lib/easel
+HMMER3_LDFLAGS 	= -L./hmmer/src -L./hmmer/lib/easel
 HMMER3_LIBS	= -lhmmer -leasel
 #HMMER3_CFLAGS 	=
 #HMMER3_LDFLAGS 	=

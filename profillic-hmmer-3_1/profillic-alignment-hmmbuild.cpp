@@ -309,6 +309,7 @@ static ESL_OPTIONS options[] = {
   { "--seed",     eslARG_INT,   "42", NULL, "n>=0",     NULL,      NULL,    NULL, "set RNG seed to <n> (if 0: one-time arbitrary seed)",   8 },
   { "--w_beta",   eslARG_REAL,  NULL, NULL, NULL,       NULL,      NULL,    NULL, "tail mass at which window length is determined",        8 },
   { "--w_length", eslARG_INT,   NULL, NULL, NULL,       NULL,      NULL,    NULL, "window length ",                                        8 },
+  { "--maxinsertlen",  eslARG_INT,   NULL, NULL, "n>=5",  NULL,     NULL,    NULL, "pretend all inserts are length <= <n>",   8 },
   { "--noprior", eslARG_NONE,  FALSE, NULL, NULL,       NULL,      NULL,    NULL, "do not apply any priors",                                8 },
   // TAH 4/12 Output hmm in linear space (instead of neg log)
   { "--linspace", eslARG_NONE, NULL,  NULL, NULL,       NULL,      NULL,    NULL, "output hmm in linear space instead of negative log",     8 },
@@ -327,14 +328,14 @@ struct cfg_s {
 
   char         *alifile;	/* name of the alignment file we're building HMMs from  */
   int           fmt;		/* format code for alifile */
-  ESLX_MSAFILE *afp;        /* open alifile  */
+  ESLX_MSAFILE *afp;            /* open alifile  */
   ESL_ALPHABET *abc;		/* digital alphabet */
 
-  char         *hmmName;    /* hmm file name supplied from -n          */
-  char         *hmmfile;    /* file to write HMM to                    */
-  FILE         *hmmfp;      /* HMM output file handle                  */
+  char         *hmmName;        /* hmm file name supplied from -n          */
+  char         *hmmfile;        /* file to write HMM to                    */
+  FILE         *hmmfp;          /* HMM output file handle                  */
 
-  char         *postmsafile;/* optional file to resave annotated, modified MSAs to  */
+  char         *postmsafile;	/* optional file to resave annotated, modified MSAs to  */
   FILE         *postmsafp;	/* open <postmsafile>, or NULL */
 
   int           nali;		/* which # alignment this is in file (only valid in serial mode)   */
@@ -510,6 +511,7 @@ profillic_output_header(const ESL_GETOPTS *go, const struct cfg_s *cfg)
   if (esl_opt_IsUsed(go, "--pextend")    && fprintf(cfg->ofp, "# gap extend probability:          %f\n",         esl_opt_GetReal   (go, "--pextend")) < 0) ESL_EXCEPTION_SYS(eslEWRITE, "write failed");
   if (esl_opt_IsUsed(go, "--mx")         && fprintf(cfg->ofp, "# subst score matrix (built-in):   %s\n",         esl_opt_GetString (go, "--mx"))      < 0) ESL_EXCEPTION_SYS(eslEWRITE, "write failed");
   if (esl_opt_IsUsed(go, "--mxfile")     && fprintf(cfg->ofp, "# subst score matrix (file):       %s\n",         esl_opt_GetString (go, "--mxfile"))  < 0) ESL_EXCEPTION_SYS(eslEWRITE, "write failed");
+  if (esl_opt_IsUsed(go, "--maxinsertlen")  && fprintf(cfg->ofp, "# max insert length:                %d\n",         esl_opt_GetInteger (go, "--maxinsertlen"))  < 0) ESL_EXCEPTION_SYS(eslEWRITE, "write failed");
 
 #ifdef HMMER_THREADS
   if (esl_opt_IsUsed(go, "--cpu")        && fprintf(cfg->ofp, "# number of worker threads:         %d\n",        esl_opt_GetInteger(go, "--cpu"))     < 0) ESL_EXCEPTION_SYS(eslEWRITE, "write failed");  
@@ -535,8 +537,7 @@ main(int argc, char **argv)
   ESL_STOPWATCH   *w  = esl_stopwatch_Create();
   struct cfg_s     cfg;
 
-  /** Set processor specific flags */
-  impl_Init();
+  p7_Init();
 
   cfg.alifile     = NULL;
   cfg.hmmfile     = NULL;
@@ -718,6 +719,12 @@ profillic_usual_master(const ESL_GETOPTS *go, struct cfg_s *cfg)
       info[i].bg = p7_bg_Create(cfg->abc);
       info[i].bld = p7_builder_Create(go, cfg->abc);
 
+      if (info[i].bld == NULL)  p7_Fail("p7_builder_Create failed");
+
+      //do this here instead of in p7_builder_Create(), because it's an hmmbuild-specific option
+      if ( esl_opt_IsOn(go, "--maxinsertlen") )
+        info[i].bld->max_insert_len    = esl_opt_GetInteger(go, "--maxinsertlen");
+
       /** Default matrix is stored in the --mx option, so it's always IsOn().
        * Check --mxfile first; then go to the --mx option and the default.
        */
@@ -732,7 +739,6 @@ profillic_usual_master(const ESL_GETOPTS *go, struct cfg_s *cfg)
       info[i].bld->w_beta     = (go != NULL && esl_opt_IsOn (go, "--w_beta"))   ?  esl_opt_GetReal   (go, "--w_beta")    : p7_DEFAULT_WINDOW_BETA;
       if ( info[i].bld->w_beta < 0 || info[i].bld->w_beta > 1  ) esl_fatal("Invalid window-length beta value\n");
 
-      if (info[i].bld == NULL)  p7_Fail("p7_builder_Create failed");
 #ifdef HMMER_THREADS
       info[i].queue = queue;
       if (ncpus > 0) esl_threads_AddThread(threadObj, &info[i]);
@@ -1456,7 +1462,6 @@ output_result(const struct cfg_s *cfg, char *errbuf, int msaidx, ESL_MSA *msa, P
       return eslOK;
     }
 
-  // DOPTE QUESION: Is this meant to be commented out?  The commenting-out is new in hmmer-3.1 v0.24 (vs v0.21).
 //  if ((status = p7_hmm_Validate(hmm, errbuf, 0.0001))       != eslOK) return status;
   if ((status = p7_hmmfile_WriteASCII(cfg->hmmfp, -1, hmm)) != eslOK) ESL_FAIL(status, errbuf, "HMM save failed");
   

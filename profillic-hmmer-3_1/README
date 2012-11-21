@@ -6,7 +6,7 @@ included with this file.  You may use at will, subject to the license
 documentation and publications associated with uses of this library.
 Thank you!
 
-Copyright (C) 2011 by Paul T Edlefsen, Fred Hutchinson Cancer Research
+Copyright (C) 2012 by Paul T Edlefsen, Fred Hutchinson Cancer Research
 Center.
 
 AND see the original copyright notice for HMMER3, reproduced below (as this is a derivative work only very slightly modifying their code and depending on HMMER3 entirely).
@@ -41,16 +41,14 @@ and are easy to install.
 
 Required external libraries:
 ---
-HMMER v3.0 source code (exactly v3.0; later versions will probably not work):
-ftp://selab.janelia.org/pub/software/hmmer3/3.0/hmmer-3.0.tar.gz
+HMMER v3 latest source code:
+svn checkout https://svn.janelia.org/eddylab/eddys/src/hmmer/trunk hmmer
 
 BOOST (tested with version 1.46.1):
 http://sourceforge.net/projects/boost/files/boost/1.46.1/
 
-Seqan version 1.2 (Note that the most recent version is 1.3 but we
-have not yet updated our code to be compatible with the new version,
-so you'll have to get version 1.2):
-http://www.seqan.de/uploads/media/Seqan_Release_1.2.zip
+Seqan snapshot
+svn co http://svn.seqan.de/seqan/trunk seqan-trunk
 
 HMMoC-BFloat-Algebra:
 http://pedlefsen.github.com/HMMoC-BFloat-Algebra/
@@ -65,16 +63,18 @@ Thank you,
   Paul
 
 Paul T. Edlefsen
-July 10, 2011
+November 21, 2012
 
-====================== HMMER 3 COPYRIGHT =========================
+====================== HMMER 3 COPYRIGHT: See COPYRIGHT file in hmmer dir; reproduced here just-in-case (but that's the authoritative version) =========================
 HMMER - Biological sequence analysis with profile hidden Markov models
 Copyright (C) 2010 Howard Hughes Medical Institute.
 ------------------------------------------------------------------
 
+------------------------------------------------------------------
+
 Additional copyrights apply to the entirety of the package:
-Copyright (C) 1992-2009 Sean R. Eddy
-Copyright (C) 2000-2009 Howard Hughes Medical Institute
+Copyright (C) 1992-2010 Sean R. Eddy
+Copyright (C) 2000-2010 Howard Hughes Medical Institute
 Copyright (C) 1992-2004 Washington University School of Medicine
 Copyright (C) 1992-1994 MRC Laboratory of Molecular Biology
 
